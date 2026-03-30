@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>M4 數據追蹤規格說明</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&family=Inter:wght@300;400;500;600;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap');
+:root{
+--bg:#111;--bg2:#1A1A1A;--card:#FFF;--card2:#F7F7F8;--text:#1A1A1A;--text2:#6B7280;--border:#E5E7EB;--white:#FFF;
+--mp:#04B486;--ga:#F9AB00;--ga2:#E37400;--cs:#003B5C;--cl:#7B2FF7;--id:#CC0000;--app:#78350f;
+--font:'Inter','Noto Sans TC',sans-serif;--mono:'JetBrains Mono',monospace}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100vw;height:100vh;overflow:hidden;background:var(--bg);font-family:var(--font);-webkit-font-smoothing:antialiased}
+.deck{width:100%;height:100%;position:relative}
+.slide{position:absolute;inset:0;display:flex;flex-direction:column;opacity:0;visibility:hidden;transition:opacity .4s,visibility .4s}
+.slide.active{opacity:1;visibility:visible}
+.slide.active .a{animation:fu .4s ease both}
+@keyframes fu{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+.slide.active .a:nth-child(1){animation-delay:.04s}
+.slide.active .a:nth-child(2){animation-delay:.08s}
+.slide.active .a:nth-child(3){animation-delay:.12s}
+.slide.active .a:nth-child(4){animation-delay:.16s}
+.slide.active .a:nth-child(5){animation-delay:.2s}
+.slide.active .a:nth-child(6){animation-delay:.24s}
+.slide.active .a:nth-child(7){animation-delay:.28s}
+.slide.active .a:nth-child(8){animation-delay:.32s}
+.slide.active .a:nth-child(9){animation-delay:.36s}
+.slide.active .a:nth-child(10){animation-delay:.4s}
+/* Nav bar */
+.bn{display:flex;align-items:center;justify-content:space-between;padding:10px 4vw;background:rgba(17,17,17,.97);flex-shrink:0;border-top:1px solid rgba(255,255,255,.1);gap:10px;min-height:50px}
+.nb{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:7px;font-size:13px;color:rgba(255,255,255,.5);cursor:pointer;transition:all .2s;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);text-decoration:none;font-weight:600;white-space:nowrap;flex-shrink:0}
+.nb:hover{color:var(--white);background:rgba(255,255,255,.14)}
+.nl_{width:150px;flex-shrink:0}.nr_{text-align:right;width:150px;flex-shrink:0}
+.nc{display:flex;gap:5px;align-items:center;justify-content:center;flex:1;flex-wrap:wrap}
+.nc a{display:inline-flex;align-items:center;gap:4px;padding:5px 10px;border-radius:5px;font-size:12px;color:rgba(255,255,255,.5);background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);text-decoration:none;transition:all .2s;font-weight:600;white-space:nowrap}
+.nc a:hover{background:rgba(255,255,255,.12);color:var(--white)}
+.nc .d{width:4px;height:4px;border-radius:50%;flex-shrink:0}
+.nh{padding:5px 7px!important;font-size:13px!important}
+.nav-arrow{position:fixed;top:50%;transform:translateY(-50%);width:36px;height:54px;display:flex;align-items:center;justify-content:center;font-size:22px;color:rgba(255,255,255,.08);cursor:pointer;z-index:200;transition:color .2s;user-select:none}
+.nav-arrow:hover{color:rgba(255,255,255,.3)}
+.nav-arrow.left{left:3px}.nav-arrow.right{right:3px}
+/* Dark slide */
+.sd{background:var(--bg);color:var(--white);padding:4.5vh 4.5vw;justify-content:center}
+.sd h1{font-size:clamp(32px,3.8vw,54px);font-weight:900;line-height:1.1;letter-spacing:-1.5px}
+.sd .sub{font-size:clamp(13px,1.3vw,18px);color:var(--text2);margin-top:4px;font-weight:300}
+.vtag{font-size:11px;color:rgba(255,255,255,.15);margin-top:8px;font-family:var(--mono);letter-spacing:1px}
+/* Cards grid */
+.cg5{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:2.5vh}
+.tc{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:16px 10px;text-align:center;transition:all .25s;cursor:pointer}
+.tc:hover{background:rgba(255,255,255,.08);transform:translateY(-2px)}
+.tc .icon{font-size:22px;margin-bottom:5px}.tc .label{font-size:clamp(12px,1vw,15px);font-weight:700}.tc .sub{font-size:clamp(9px,.7vw,11px);color:var(--text2);margin-top:2px}
+/* Arch entry */
+.ae{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:14px 20px;display:flex;align-items:center;gap:14px;cursor:pointer;transition:all .25s;margin-top:2vh}
+.ae:hover{background:rgba(255,255,255,.08);transform:translateY(-2px)}
+/* Links */
+.ls{margin-top:2.5vh}.ls h3{font-size:10px;font-weight:500;color:var(--text2);margin-bottom:6px;text-transform:uppercase;letter-spacing:2px}
+.lg{display:flex;gap:5px;flex-wrap:wrap}
+.lc{display:inline-flex;align-items:center;gap:4px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);border-radius:6px;padding:5px 10px;font-size:11px;color:rgba(255,255,255,.45);text-decoration:none;transition:all .2s;cursor:pointer;font-weight:500}
+.lc:hover{background:rgba(255,255,255,.1);color:var(--white)}
+.lc .d{width:4px;height:4px;border-radius:50%;flex-shrink:0}
+/* Light slide */
+.sl{background:var(--card2);color:var(--text)}
+.sh{background:var(--bg);padding:14px 4.5vw;display:flex;align-items:center;gap:10px;flex-shrink:0}
+.sh .hi{font-size:22px}.sh h2{font-size:clamp(17px,1.8vw,26px);font-weight:900;color:var(--white)}
+.sb{padding:2.5vh 4.5vw 2vh;flex:1;overflow-y:auto}
+.sb::-webkit-scrollbar{width:4px}.sb::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+/* Content cards */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.cc{background:var(--card);border-radius:10px;overflow:hidden;border:1px solid var(--border)}
+.cch{padding:10px 20px;font-size:15px;font-weight:700;color:var(--white);display:flex;align-items:center;gap:6px}
+.ccb{padding:18px 20px}
+.f{margin-bottom:10px}.f:last-child{margin-bottom:0}
+.fl{font-size:14px;font-weight:700;color:var(--text);margin-bottom:2px}
+.fv{font-size:13px;color:var(--text2);line-height:1.55}
+/* Notice */
+.nt{background:var(--card);border-radius:10px;margin-top:16px;padding:18px 20px;border:1px solid var(--border)}
+.ntt{font-size:15px;font-weight:700;margin-bottom:8px}
+.nli{list-style:none}.nli li{font-size:13px;color:var(--text);padding:3px 0;line-height:1.55;display:flex;align-items:flex-start;gap:8px}
+.nm{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;font-size:9px;font-weight:700;flex-shrink:0;margin-top:1px;color:var(--white)}
+/* Table */
+.st{width:100%;border-collapse:collapse;margin-top:8px;font-size:13px}
+.st th{background:var(--bg);color:var(--white);padding:8px 14px;text-align:left;font-weight:600;font-size:12px}
+.st td{padding:8px 14px;border-bottom:1px solid var(--border);color:var(--text);line-height:1.45}
+.st tr:nth-child(even) td{background:var(--card2)}.st .bold{font-weight:700}
+/* Info block */
+.ib{background:var(--card);border-radius:10px;padding:18px 20px;margin-top:16px;border:1px solid var(--border)}
+.ib h4{font-size:15px;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.ib .kv{margin-bottom:6px;font-size:13px;line-height:1.55}
+.ib .kv strong{color:var(--text)}.ib .kv span{color:var(--text2)}
+.hl{color:var(--ga2);font-weight:600}
+/* Vertical flow */
+.vflow{display:flex;flex-direction:column;align-items:center;gap:0}
+.vf-step{display:flex;align-items:center;gap:14px;width:100%}
+.vf-num{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:var(--white);flex-shrink:0}
+.vf-box{flex:1;padding:12px 18px;border-radius:8px;color:var(--white);font-weight:600;font-size:14px}
+.vf-box .vf-sub{font-size:12px;opacity:.7;font-weight:400;margin-top:2px}
+.vf-arrow{text-align:center;font-size:18px;color:var(--text2);padding:3px 0 3px 16px}
+.vf-split{display:flex;gap:12px;width:100%;padding-left:46px}
+.vf-split-box{flex:1;padding:10px 16px;border-radius:8px;color:var(--white);font-weight:600;font-size:13px;text-align:center}
+.vf-split-box .vf-sub{font-size:11px;opacity:.7;font-weight:400;margin-top:2px}
+/* Env table */
+.et{width:100%;border-collapse:collapse;font-size:14px}
+.et th{padding:10px 14px;text-align:left;font-weight:800;font-size:14px;border-bottom:2px solid var(--border);color:var(--text)}
+.et td{padding:10px 14px;border-bottom:1px solid var(--border);color:var(--text2);line-height:1.5;vertical-align:top;font-size:13px}
+.et tr:nth-child(even) td{background:var(--card2)}
+.tag{padding:2px 7px;border-radius:4px;font-size:10px;font-weight:700;display:inline-block}
+.tag-w{background:#E8F5E9;color:#2E7D32}.tag-a{background:#FFF3E0;color:#E65100}.tag-v{background:#F3E5F5;color:#6A1B9A}
+/* Principle bar */
+.pb{background:var(--bg);border-radius:8px;padding:12px 20px;margin-top:16px;text-align:center;font-size:14px;font-weight:600;color:rgba(255,255,255,.65)}.pb em{opacity:.3;font-style:normal}
+/* Side box */
+.side-box{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px 18px;margin-bottom:10px}
+.side-box h5{font-size:13px;font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.side-box p{font-size:12px;color:var(--text2);line-height:1.55}
+/* Lang */
+.lt{position:fixed;top:10px;right:10px;z-index:300;display:flex;background:rgba(17,17,17,.9);border:1px solid rgba(255,255,255,.08);border-radius:5px;overflow:hidden}
+.lt button{padding:4px 10px;font-size:10px;font-weight:600;border:none;cursor:pointer;transition:all .2s;font-family:var(--font);color:rgba(255,255,255,.25);background:transparent}
+.lt button.active{background:var(--ga);color:var(--bg)}
+.lt button:hover:not(.active){color:rgba(255,255,255,.5)}
+.bg-id{background:var(--id)}.bg-mp{background:var(--mp)}.bg-ga{background:var(--ga2)}.bg-cs{background:var(--cs)}.bg-cl{background:var(--cl)}.bg-app{background:var(--app)}
+.bl-id{border-left:4px solid var(--id)}.bl-mp{border-left:4px solid var(--mp)}.bl-ga{border-left:4px solid var(--ga2)}.bl-cs{border-left:4px solid var(--cs)}.bl-cl{border-left:4px solid var(--cl)}
+</style>
+</head>
+<body>
+<div class="lt"><button class="active" onclick="setLang('zh')">中文</button><button onclick="setLang('en')">EN</button></div>
+<div class="deck" id="deck">
+
+<!-- S1: Overview -->
+<div class="slide sd active" data-slide="1">
+<h1 class="a" data-i="t1">M4 數據追蹤規格說明</h1>
+<div class="sub a" data-i="t1sub">Data Tracking Spec — Web + App</div>
+<div class="vtag a">V1 · 2026-03-31</div>
+<div class="ae a" onclick="goTo(1)"><span style="font-size:22px">🗺️</span><div><div style="font-weight:800;font-size:16px" data-i="t1ar">全景架構圖 — 時序與環境對照</div><div style="font-size:13px;color:var(--text2);margin-top:3px" data-i="t1ars">ID 身分識別為什麼是一切的前提？五個工具如何串聯？</div></div></div>
+<div class="cg5 a">
+<div class="tc" onclick="goTo(3)"><div class="icon">🔑</div><div class="label">ID Sync</div><div class="sub" data-i="t1c1">身分核心</div></div>
+<div class="tc" onclick="goTo(4)"><div class="icon">📊</div><div class="label">mParticle</div><div class="sub">CDP</div></div>
+<div class="tc" onclick="goTo(5)"><div class="icon">📈</div><div class="label">GA4</div><div class="sub" data-i="t1c3">流量分析</div></div>
+<div class="tc" onclick="goTo(6)"><div class="icon">📡</div><div class="label">Comscore</div><div class="sub" data-i="t1c4">收視量測</div></div>
+<div class="tc" onclick="goTo(7)"><div class="icon">🔍</div><div class="label">Clarity</div><div class="sub" data-i="t1c5">行為錄影</div></div>
+</div>
+<div class="ls a"><h3 data-i="cuT">ClickUp 開發卡片</h3><div class="lg">
+<a class="lc" href="https://app.clickup.com/t/9018900474/NS-3428" target="_blank" rel="noopener"><span class="d" style="background:var(--id)"></span>ID Sync</a>
+<a class="lc" href="https://app.clickup.com/t/9018900474/NS-3454" target="_blank" rel="noopener"><span class="d" style="background:var(--mp)"></span>mParticle</a>
+<a class="lc" href="https://app.clickup.com/t/9018900474/NS-3426" target="_blank" rel="noopener"><span class="d" style="background:var(--ga)"></span>GA4</a>
+<a class="lc" href="https://app.clickup.com/t/9018900474/NS-3427" target="_blank" rel="noopener"><span class="d" style="background:var(--cs)"></span>Comscore</a>
+<a class="lc" href="https://app.clickup.com/t/9018900474/NS-3370" target="_blank" rel="noopener"><span class="d" style="background:var(--cl)"></span>Clarity</a>
+<a class="lc" href="https://app.clickup.com/t/9018900474/NS-3509" target="_blank" rel="noopener"><span class="d" style="background:var(--app)"></span>App Comscore</a>
+<a class="lc" href="https://app.clickup.com/t/9018900474/NS-2904" target="_blank" rel="noopener"><span class="d" style="background:var(--app)"></span>App GA4</a>
+<a class="lc" href="https://app.clickup.com/t/9018900474/NS-3429" target="_blank" rel="noopener"><span class="d" style="background:var(--app)"></span>App mParticle</a>
+</div></div>
+</div>
+
+<!-- S2: Architecture - ID & Timing (vertical flow, numbered) -->
+<div class="slide sl" data-slide="2">
+<div class="sh"><span class="hi">🗺️</span><h2 data-i="t2a">架構 — 為什麼 ID 是一切的前提</h2></div>
+<div class="sb">
+<div class="a" style="font-size:15px;color:var(--text);line-height:1.7;max-width:800px;margin-bottom:16px" data-i="t2intro"><strong>核心問題：</strong>TVBS M4 同時使用五個追蹤工具，其中三個（mParticle、GA4、Comscore）需要共用同一張「身分證」(mpid)。如果使用者的第一筆瀏覽事件在 mpid 尚未取得前就發出，該筆數據就會「斷頭」——無法歸戶、無法跨平台比對。<strong style="color:var(--id)">ID Sync SDK 的工作就是在所有追蹤標籤之前，先把身分證準備好。</strong></div>
+
+<div class="a" style="font-size:16px;font-weight:800;color:var(--text);margin-bottom:10px" data-i="t2seqt">📐 Web 端載入時序</div>
+<div class="a" style="display:flex;gap:30px;align-items:flex-start">
+<div class="vflow" style="flex:1;max-width:500px">
+<div class="vf-step"><div class="vf-num bg-id">1</div><div class="vf-box bg-id">ID Sync SDK 載入<div class="vf-sub" data-i="t2s1">hard-code 在 _document.tsx &lt;head&gt; 最頂端，禁止走 GTM</div></div></div>
+<div class="vf-arrow">↓</div>
+<div class="vf-step"><div class="vf-num bg-mp">2</div><div class="vf-box bg-mp">mParticle SDK 初始化<div class="vf-sub" data-i="t2s2">由 ID Sync 內部自動載入並啟動，前端不需另外引入</div></div></div>
+<div class="vf-arrow">↓</div>
+<div class="vf-step"><div class="vf-num" style="background:var(--text)">3</div><div class="vf-box" style="background:var(--text)">SDK 就緒 → 取得 mpid → 通知所有等待中的程式<div class="vf-sub" data-i="t2s3">SDK 準備好後呼叫 getMPID() 拿到身分證，然後「廣播」給 GA4、mParticle 等所有在排隊等候的模組</div></div></div>
+<div class="vf-arrow">↓</div>
+<div class="vf-step"><div class="vf-num bg-ga">4</div><div class="vf-box bg-ga">dataLayer.push({ event: 'mpid_ready', mpid })<div class="vf-sub" data-i="t2s4">推送給 GTM，GA4 Config Tag 以此為觸發條件</div></div></div>
+<div class="vf-arrow">↓ 分流</div>
+<div class="vf-split">
+<div class="vf-split-box bg-ga">GA4 Config → Event Tag<div class="vf-sub" data-i="t2s5a">帶入 mpid 為 User Property</div></div>
+<div class="vf-split-box bg-mp">mParticle logPageView<div class="vf-sub" data-i="t2s5b">原生 API 直接發送，不走 GTM</div></div>
+</div>
+</div>
+<div style="flex:0 0 240px">
+<div style="font-size:14px;font-weight:800;color:var(--text);margin-bottom:8px" data-i="t2part">⚡ 平行載入</div>
+<div style="font-size:13px;color:var(--text2);margin-bottom:10px" data-i="t2pard">以下工具不等待 mpid，與上方時序鏈同時載入</div>
+<div class="side-box" style="border-left:4px solid var(--cs)"><h5 style="color:var(--cs)">📡 Comscore</h5><p data-i="t2cs">GTM All Pages<br>帶 cs_fpid（_ga 的 SHA-256）</p></div>
+<div class="side-box" style="border-left:4px solid var(--cl)"><h5 style="color:var(--cl)">🔍 Clarity</h5><p data-i="t2cl">GTM All Pages<br>完全獨立，不依賴任何 ID</p></div>
+<div class="side-box" style="border-left:4px solid var(--id)"><h5 style="color:var(--id)" data-i="t2timeout">⏱ 逾時防呆</h5><p data-i="t2tov">5 秒內 SDK 未就緒 → resolve(undefined)。下游模組自行決定是否帶空 mpid 送出，頁面不卡死。</p></div>
+</div>
+</div>
+</div>
+<div class="bn"><div class="nl_"><div class="nb" onclick="goTo(0)">⌂</div></div><div class="nc"></div><div class="nr_"><div class="nb" onclick="goTo(2)" data-i="navEnv">環境對照 →</div></div></div>
+</div>
+
+<!-- S3: Architecture - Environment comparison -->
+<div class="slide sl" data-slide="3">
+<div class="sh"><span class="hi">🗺️</span><h2 data-i="t2b">架構 — Web / App / WebView 環境對照</h2></div>
+<div class="sb">
+<div class="a" style="font-size:15px;color:var(--text);line-height:1.7;margin-bottom:14px" data-i="t3intro">同一套追蹤邏輯，在三種環境下的實作方式不同。<strong>WebView</strong> 是最複雜的情境——App 內開啟網頁時，Web 端的 SDK 和 App 端的 SDK 會同時存在，若不加以處理，事件會重複發送。因此需要 <strong>Bridge（橋樑）</strong>機制：讓 Web 端的 SDK 偵測到自己在 App 內，就不自己送事件，改為把資料「轉交」給 App 端的 Native SDK 統一發送。</div>
+<table class="et a">
+<tr><th style="width:12%">工具</th><th style="width:29%"><span class="tag tag-w">Web</span> 瀏覽器</th><th style="width:29%"><span class="tag tag-a">App</span> 原生</th><th style="width:30%"><span class="tag tag-v">WebView</span> App 內開網頁</th></tr>
+<tr><td style="font-weight:800;color:var(--id)">ID Sync</td><td data-i="e1w">hard-code &lt;head&gt; 最頂端</td><td data-i="e1a">不使用（App 用 mParticle Native SDK）</td><td data-i="e1v">同 Web，但事件透過 Bridge 轉回 Native</td></tr>
+<tr><td style="font-weight:800;color:var(--mp)">mParticle</td><td data-i="e2w">ID Sync 內建載入；logPageView 原生 API</td><td data-i="e2a">Native SDK 直接安裝；logScreen API</td><td data-i="e2v">WebView Bridge 模式：Web SDK 轉為中介，事件由 Native 統一發送（不重複）</td></tr>
+<tr><td style="font-weight:800;color:var(--ga2)">GA4</td><td data-i="e3w">GTM：mpid_ready → Config Tag → Event Tag</td><td data-i="e3a">Firebase SDK：等 mpid → setUserProperty → logEvent</td><td data-i="e3v">自建 JS Bridge：page_view 改名 screen_view → Native Firebase 發射</td></tr>
+<tr><td style="font-weight:800;color:var(--cs)">Comscore</td><td data-i="e4w">GTM 自訂 HTML / All Pages</td><td data-i="e4a">Comscore Native SDK（獨立安裝，不走 mParticle）</td><td data-i="e4v">走 Web GTM（同 Web 端）</td></tr>
+<tr><td style="font-weight:800;color:var(--cl)">Clarity</td><td data-i="e5w">GTM 自訂 HTML / All Pages</td><td data-i="e5a">不適用（原生畫面不植入）</td><td data-i="e5v">走 Web GTM（同 Web 端）</td></tr>
+</table>
+
+<div class="ib a bl-cl" style="margin-top:18px"><h4 style="color:var(--text)">🌉 <span data-i="t3brt">什麼是 Bridge？為什麼需要兩套？</span></h4>
+<div class="kv" style="font-size:14px;margin-bottom:10px"><span data-i="t3brd">Bridge 是 App 開發者預先在 WebView 裡注入的「通訊通道」。Web 前端透過 JavaScript 偵測這個通道是否存在，如果存在就代表自己在 App 內，就把事件資料透過通道傳給 Native SDK，由 Native 統一發送。這樣就不會 Web 送一次、App 又送一次。</span></div>
+<div class="two-col" style="gap:12px">
+<div class="side-box" style="border-left:4px solid var(--ga2)"><h5 style="color:var(--ga2)">GA4 Bridge（自建）</h5>
+<p><strong>Android：</strong><span data-i="t3b1a">AnalyticsWebInterface（addJavascriptInterface）</span><br><strong>iOS：</strong><span data-i="t3b1i">firebase 通道（WKScriptMessageHandler）</span><br><span style="color:var(--text2);font-size:11px" data-i="t3b1n">偵測到 Bridge → page_view 改名 screen_view + display_mode=app_webview</span></p></div>
+<div class="side-box" style="border-left:4px solid var(--mp)"><h5 style="color:var(--mp)">mParticle Bridge（官方內建）</h5>
+<p><strong data-i="t3b2k">設定：</strong><span data-i="t3b2v">requiredWebviewBridgeName: 'tvbsNewsbridge'</span><br><strong class="hl" data-i="t3b2w">注意：</strong><span class="hl" data-i="t3b2wv">Web 與 Native 的 bridge name 必須完全一致</span><br><span style="color:var(--text2);font-size:11px" data-i="t3b2n">兩套 Bridge 獨立運作、互不影響</span></p></div>
+</div>
+</div>
+<div class="pb a">先有身分（mpid），才有事件 <em>｜</em> ID Sync 必須在所有追蹤標籤之前載入</div>
+</div>
+<div class="bn"><div class="nl_"><div class="nb" onclick="goTo(1)" data-i="navSeq">← 時序架構</div></div><div class="nc"><div class="nb nh" onclick="goTo(0)">⌂</div></div><div class="nr_"><div class="nb" onclick="goTo(3)">ID Sync →</div></div></div>
+</div>
+
+<!-- S4: ID Sync -->
+<div class="slide sl" data-slide="4">
+<div class="sh"><span class="hi">🔑</span><h2 data-i="t4t">ID Sync SDK — 全站身分識別核心</h2></div>
+<div class="sb">
+<div class="a" style="font-size:15px;color:var(--text);line-height:1.7;margin-bottom:14px" data-i="t4intro"><strong style="color:var(--id)">ID Sync SDK 的唯一目的：</strong>收攏 Web 端的 Identity，確保所有追蹤事件都帶著正確的身分證 (mpid)。它內部包裹了 mParticle SDK，負責初始化並產生 mpid。一旦 mpid 就緒，GA4、mParticle Screen View、Comscore 等工具才能正確歸戶。</div>
+<div class="two-col a">
+<div class="cc"><div class="cch bg-id" data-i="t4why">為什麼必須 Hard-code？</div><div class="ccb">
+<div class="f"><div class="fl" data-i="t4r1l">1. 防禦無痕模式</div><div class="fv" data-i="t4r1v">Ad-blocker 可能攔截 GTM，一旦 GTM 被擋，身分識別機制就整個停擺</div></div>
+<div class="f"><div class="fl" data-i="t4r2l">2. 時序保證</div><div class="fv" data-i="t4r2v">確保在任何 GA4 或行銷標籤觸發前，mpid 已就緒，不會出現「數據斷頭」</div></div>
+<div class="f"><div class="fl" data-i="t4r3l">3. 基礎設施等級</div><div class="fv" data-i="t4r3v">定位等同網站核心 CSS / JS，不可選擇性載入或延遲載入</div></div>
+</div></div>
+<div class="cc"><div class="cch" style="background:var(--text)" data-i="t4params">環境參數</div><div class="ccb">
+<div class="f"><div class="fl">SDK URL</div><div class="fv" style="font-family:var(--mono);font-size:12px">https://sdk.tvbs.com.tw/idsync/tvbs-idsync.min.js</div></div>
+<div class="f"><div class="fl" data-i="t4prod">正式 API Key</div><div class="fv" style="font-family:var(--mono);font-size:11px">au1-58677874cfd0d44e928e7986a5b061d1</div></div>
+<div class="f"><div class="fl" data-i="t4test">測試 API Key</div><div class="fv" style="font-family:var(--mono);font-size:11px">au1-83b4a3666c59ee43b91d4d93eea7a19f</div></div>
+<div class="f"><div class="fl">Data Plan</div><div class="fv">tvbs_plan_v2（SDK 自動判斷版本）</div></div>
+</div></div>
+</div>
+<div class="ib a bl-id"><h4 style="color:var(--id)">🔗 Promise 橋樑機制（推薦實作方式）</h4>
+<div class="kv" style="font-size:14px"><strong data-i="t4p1">核心概念：</strong><span data-i="t4p1v">建立全域 window.mParticleMpIdReadyPromise，所有下游模組（GA4、mParticle Screen View）await 同一個 Promise 即可取得 mpid</span></div>
+<div class="kv" style="font-size:14px"><strong data-i="t4p2">onReady callback：</strong><span data-i="t4p2v">SDK 完成後觸發，但不帶參數——必須在 callback 內主動呼叫 getMPID() 取值再 resolve</span></div>
+<div class="kv" style="font-size:14px"><strong data-i="t4p3">逾時防呆：</strong><span class="hl" data-i="t4p3v">5 秒未就緒（如被 Ad-blocker 攔截）→ resolve(undefined)，避免整站追蹤卡死</span></div>
+</div>
+<div class="nt a bl-id"><div class="ntt" style="color:var(--id)" data-i="t4dod">驗收標準 (DoD)</div><ul class="nli">
+<li><span class="nm bg-id">1</span><span data-i="t4d1">Console 執行 await window.mParticleMpIdReadyPromise → 回傳 mpid 字串（如 "1234567890123"）</span></li>
+<li><span class="nm bg-id">2</span><span data-i="t4d2">開啟 Ad-blocker 重整 → 5 秒後 resolve undefined，頁面功能與排版不受影響</span></li>
+<li><span class="nm bg-id">3</span><span data-i="t4d3">網頁原始碼中，ID Sync 的程式碼必須排在 GTM 的程式碼前面（瀏覽器從上往下執行，誰在前誰先跑）</span></li>
+</ul></div>
+<div class="nt a" style="border-left:4px solid var(--text2)"><div class="ntt" style="color:var(--text2)">📌 MVP 階段補充</div><ul class="nli">
+<li><span class="nm" style="background:var(--text2)">!</span><span data-i="t4insider">Insider（行銷自動化工具）本次 MVP 先不處理整合，後續視狀況評估</span></li>
+</ul></div>
+</div>
+<div class="bn"><div class="nl_"><div class="nb" onclick="goTo(2)">← 環境對照</div></div><div class="nc"><a class="nc" href="https://app.clickup.com/t/9018900474/NS-3428" target="_blank" rel="noopener"><span class="d" style="background:var(--id)"></span>ID Sync</a><div class="nb nh" onclick="goTo(0)">⌂</div></div><div class="nr_"><div class="nb" onclick="goTo(4)">mParticle →</div></div></div>
+</div>
+
+<!-- S5: mParticle -->
+<div class="slide sl" data-slide="5">
+<div class="sh"><span class="hi">📊</span><h2 data-i="t5t">mParticle (CDP) — Screen View 追蹤</h2></div>
+<div class="sb">
+<div class="two-col a">
+<div class="cc"><div class="cch bg-mp"><span class="tag tag-w" style="margin-right:4px">Web</span> 埋設方式</div><div class="ccb">
+<div class="f"><div class="fl" data-i="t5wl">載入方式</div><div class="fv" data-i="t5wlv">由 ID Sync SDK 內部自動載入 mParticle，不需另外引入</div></div>
+<div class="f"><div class="fl" data-i="t5wa">事件發送</div><div class="fv" data-i="t5wav">使用原生 API mParticle.logPageView()，不走 GTM DataLayer</div></div>
+<div class="f"><div class="fl" data-i="t5wr">為什麼不走 GTM？</div><div class="fv" data-i="t5wrv">SPA 架構快速換頁時，GTM 的非同步觸發器匹配容易漏單；原生 API 僅增加 &lt;1KB 程式碼</div></div>
+</div></div>
+<div class="cc"><div class="cch bg-app" style="color:var(--white)"><span class="tag tag-a" style="margin-right:4px">App</span> 埋設方式</div><div class="ccb">
+<div class="f"><div class="fl">SDK</div><div class="fv" data-i="t5as">mParticle Native SDK（iOS / Android 各自安裝，不經 ID Sync）</div></div>
+<div class="f"><div class="fl" data-i="t5aa">事件發送</div><div class="fv">logScreen("EventName", screenInfo)</div></div>
+<div class="f"><div class="fl" data-i="t5ai">身份識別</div><div class="fv" data-i="t5aiv">MVP 無會員機制，僅處理匿名訪客 mpid；暫不實作 login/logout</div></div>
+</div></div>
+</div>
+<div class="a" style="margin-top:16px"><div style="font-size:15px;font-weight:800;color:var(--text);margin-bottom:6px" data-i="t5ev">Screen View 事件總覽（MVP 共 6 個畫面）</div>
+<table class="st"><tr><th>Name</th><th data-i="t5p">平台</th><th data-i="t5wc">Web 屬性數</th><th data-i="t5ac">App 屬性數</th><th data-i="t5pg">觸發頁面</th><th data-i="t5src">資料來源</th></tr>
+<tr><td class="bold">Home</td><td>Web / App</td><td>5</td><td>0</td><td>/ 首頁</td><td data-i="t5s1">前端靜態</td></tr>
+<tr><td class="bold">Article</td><td>Web / App</td><td>12</td><td>6</td><td>/{category}/{id} 文章頁</td><td data-i="t5s2">後端 API（文章標題、作者、分類、標籤等）</td></tr>
+<tr><td class="bold">Video</td><td>Web / App</td><td>8</td><td>2</td><td>/video/{id} 影音頁</td><td data-i="t5s3">後端 API（影音標題、ID）</td></tr>
+<tr><td class="bold">Category</td><td>Web / App</td><td>7</td><td>2</td><td>/category/{slug} 分類頁</td><td data-i="t5s4">後端 API（分類中英名）</td></tr>
+<tr><td class="bold">Package</td><td>Web / App</td><td>8</td><td>2</td><td>/topic/{slug} 議題頁</td><td data-i="t5s5">後端 API（議題標題、ID）</td></tr>
+<tr><td class="bold">Search</td><td>Web / App</td><td>8</td><td>6</td><td>/search?q={kw} 搜尋頁</td><td data-i="t5s6">前端（關鍵字）+ API（筆數）</td></tr>
+</table>
+<div class="ib a" style="border-left:4px solid var(--text2);margin-top:10px"><h4 style="color:var(--text)">📋 資料介接與埋點對照</h4>
+<div class="kv" style="font-size:14px"><strong data-i="t5dt1">Data Team 職責：</strong><span data-i="t5dt1v">定義事件名稱、屬性欄位與資料格式，由 mParticle 後台管理 Data Plan</span></div>
+<div class="kv" style="font-size:14px"><strong data-i="t5dt2">前端 RD 職責：</strong><span data-i="t5dt2v">在對應路由中呼叫 mParticle.logPageView() 並從後端 API 取得文章/影音/分類等欄位值填入</span></div>
+<div class="kv" style="font-size:14px"><strong data-i="t5dt3">完整欄位定義：</strong><span><a href="https://docs.google.com/spreadsheets/d/1XxHSL9Fv0kwa2zRv_P7Ad2ICP5LRSIrVDyvHFjbB2TQ" target="_blank" style="color:var(--mp);font-weight:700;text-decoration:underline" data-i="t5dt3v">📊 CDP 事件 Tracking Plan (Google Sheet)</a></span></div>
+</div></div>
+<div class="ib a bl-mp"><h4 style="color:var(--mp)">🌉 WebView Bridge（避免重複計算）</h4>
+<div class="kv" style="font-size:14px"><strong data-i="t5b1">問題：</strong><span data-i="t5b1v">App 內 WebView 開網頁時，Web SDK 和 Native SDK 各自送事件 → 重複計算</span></div>
+<div class="kv" style="font-size:14px"><strong data-i="t5b2">解法：</strong><span data-i="t5b2v">Web config 加入 requiredWebviewBridgeName: 'tvbsNewsbridge'，偵測到 Bridge 後轉為中介模式</span></div>
+<div class="kv" style="font-size:14px"><strong class="hl" data-i="t5b3">關鍵：</strong><span class="hl" data-i="t5b3v">Web 與 Native 的 bridge name 必須完全一致（tvbsNewsbridge），否則事件仍會重複</span></div>
+</div>
+</div>
+<div class="bn"><div class="nl_"><div class="nb" onclick="goTo(3)">← ID Sync</div></div><div class="nc"><a class="nc" href="https://app.clickup.com/t/9018900474/NS-3454" target="_blank" rel="noopener"><span class="d" style="background:var(--mp)"></span>mParticle</a><a class="nc" href="https://app.clickup.com/t/9018900474/NS-3429" target="_blank" rel="noopener"><span class="d" style="background:var(--app)"></span>App</a><div class="nb nh" onclick="goTo(0)">⌂</div></div><div class="nr_"><div class="nb" onclick="goTo(5)">GA4 →</div></div></div>
+</div>
+
+<!-- S6: GA4 - emphasize App native vs WebView -->
+<div class="slide sl" data-slide="6">
+<div class="sh"><span class="hi">📈</span><h2 data-i="t6t">GA4 — 流量分析</h2></div>
+<div class="sb">
+<div class="a" style="font-size:15px;font-weight:800;color:var(--text);margin-bottom:6px" data-i="t6gtm">Web 端 GTM 雙 Tag 時序</div>
+<div class="a" style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+<div style="padding:10px 18px;border-radius:8px;background:var(--ga2);color:var(--white);font-size:14px;font-weight:600;text-align:center">① GA4 Google Tag<div style="font-size:11px;opacity:.65;margin-top:2px">觸發：mpid_ready</div></div>
+<div style="font-size:20px;color:var(--text2)">→</div>
+<div style="padding:10px 18px;border-radius:8px;background:var(--ga);color:var(--text);font-size:14px;font-weight:600;text-align:center">② GA4 Event Tag<div style="font-size:11px;opacity:.65;margin-top:2px">觸發：tvbs_page_view / search</div></div>
+</div>
+
+<div class="a" style="font-size:15px;font-weight:800;color:var(--text);margin-bottom:6px" data-i="t6mvp">MVP 必做事件（4 個）</div>
+<table class="st a"><tr><th data-i="t6en">事件名稱</th><th data-i="t6ep">平台</th><th data-i="t6ed">說明</th></tr>
+<tr><td class="bold">page_view</td><td><span class="tag tag-w">Web</span></td><td data-i="t6e1">所有 Web 畫面，帶 15+ 新聞專屬參數（作者、記者、分類、標籤等）</td></tr>
+<tr><td class="bold">screen_view</td><td><span class="tag tag-a">App</span> <span class="tag tag-v">WebView</span></td><td data-i="t6e2">所有 App 原生畫面 + WebView 透過 Bridge 轉發的畫面</td></tr>
+<tr><td class="bold">search</td><td><span class="tag tag-w">Web</span> <span class="tag tag-a">App</span></td><td data-i="t6e3">全平台搜尋事件：search_term, search_type, result_count</td></tr>
+<tr><td class="bold">click_notification</td><td><span class="tag tag-a">App 專屬</span></td><td data-i="t6e4">推播點擊進站：push_date, notify_title, notify_type</td></tr>
+</table>
+
+<div class="ib a" style="border-left:4px solid #6A1B9A;margin-top:16px"><h4 style="color:#6A1B9A" data-i="t6wvt">🔀 App 原生 vs WebView — GA4 分流重點</h4>
+<div class="kv" style="font-size:14px;margin-bottom:8px"><span data-i="t6wvd"><strong>App 原生畫面（首頁、分類、會員等）：</strong>由 Firebase SDK 直接發送 screen_view，display_mode = <code style="font-family:var(--mono);background:var(--card2);padding:1px 4px;border-radius:3px">app_native</code></span></div>
+<div class="kv" style="font-size:14px;margin-bottom:8px"><span data-i="t6wvw"><strong>App 內 WebView（文章頁、搜尋頁等）：</strong>Web 前端偵測 JS Bridge 存在 → 將 page_view 改名 screen_view，display_mode 覆寫為 <code style="font-family:var(--mono);background:var(--card2);padding:1px 4px;border-radius:3px">app_webview</code> → 呼叫 Native Bridge 發射給 Firebase</span></div>
+<div class="kv" style="font-size:14px"><span data-i="t6wvb"><strong>Bridge 偵測：</strong>Android 檢查 <code style="font-family:var(--mono);background:var(--card2);padding:1px 4px;border-radius:3px">window.AnalyticsWebInterface</code> · iOS 檢查 <code style="font-family:var(--mono);background:var(--card2);padding:1px 4px;border-radius:3px">window.webkit.messageHandlers.firebase</code></span></div>
+</div>
+<div class="nt a bl-ga"><div class="ntt" style="color:var(--ga2)" data-i="t6key">關鍵注意</div><ul class="nli">
+<li><span class="nm bg-ga">1</span><span data-i="t6k1">mpid_ready 必須在 tvbs_page_view 之前推送，否則 GA4 第一筆事件缺 mpid</span></li>
+<li><span class="nm bg-ga">2</span><span data-i="t6k2">Web display_mode 固定 'web'；WebView 必須覆寫為 'app_webview'</span></li>
+<li><span class="nm" style="background:var(--text2)">3</span><span data-i="t6k3">Phase 2 才做：video_start / video_progress / video_complete、share、scroll 等互動事件</span></li>
+</ul></div>
+</div>
+<div class="bn"><div class="nl_"><div class="nb" onclick="goTo(4)">← mParticle</div></div><div class="nc"><a class="nc" href="https://app.clickup.com/t/9018900474/NS-3426" target="_blank" rel="noopener"><span class="d" style="background:var(--ga)"></span>GA4</a><a class="nc" href="https://app.clickup.com/t/9018900474/NS-2904" target="_blank" rel="noopener"><span class="d" style="background:var(--app)"></span>App GA4</a><div class="nb nh" onclick="goTo(0)">⌂</div></div><div class="nr_"><div class="nb" onclick="goTo(6)">Comscore →</div></div></div>
+</div>
+
+<!-- S7: Comscore - full field layout -->
+<div class="slide sl" data-slide="7">
+<div class="sh"><span class="hi">📡</span><h2 data-i="t7t">Comscore — 收視量測</h2></div>
+<div class="sb">
+<div class="two-col a">
+<div class="cc"><div class="cch bg-cs"><span class="tag tag-w" style="margin-right:4px">Web</span> GTM 埋設</div><div class="ccb">
+<div class="f"><div class="fl">Publisher ID (c2)</div><div class="fv" style="font-family:var(--mono);font-size:14px;font-weight:600">18400300</div></div>
+<div class="f"><div class="fl">beacon.js URL</div><div class="fv" style="font-family:var(--mono);font-size:12px">https://sb.scorecardresearch.com/cs/18400300/beacon.js</div></div>
+<div class="f"><div class="fl" data-i="t7trig">觸發條件</div><div class="fv">All Pages</div></div>
+<div class="f"><div class="fl">GTM Container</div><div class="fv" data-i="t7gtm">RD 自建新 Container（不沿用現站 GTM-PHFLV7B）</div></div>
+<div class="f"><div class="fl">cs_ucfr</div><div class="fv" data-i="t7ucfr">固定 "1"（台灣情境，不與 CMP 動態連動）</div></div>
+<div class="f"><div class="fl">enableFirstPartyCookie</div><div class="fv" data-i="t7fpc">"true" → 啟用 1P Cookie _scor_uid</div></div>
+</div></div>
+<div class="cc"><div class="cch bg-app" style="color:var(--white)"><span class="tag tag-a" style="margin-right:4px">App</span> Native SDK</div><div class="ccb">
+<div class="f"><div class="fl">Publisher Secret</div><div class="fv" style="font-family:var(--mono);font-size:11px">0504c0de1d9a66f34c4a487a45cbec9b</div></div>
+<div class="f"><div class="fl">SDK</div><div class="fv" data-i="t7as">Comscore iOS SDK 6.16.0 / Android SDK 6.12.1</div></div>
+<div class="f"><div class="fl" data-i="t7inst">安裝方式</div><div class="fv" data-i="t7instv">獨立安裝，不透過 mParticle kit 轉送</div></div>
+<div class="f"><div class="fl" data-i="t7an">⚠ 安全注意</div><div class="fv" style="color:var(--id);font-weight:600" data-i="t7anv">此金鑰密碼不可直接寫在程式碼裡推上 GitHub（因 repo 公開，任何人可見）。應放在環境變數 (.env) 中，不納入 git 版控。</div></div>
+</div></div>
+</div>
+
+<div class="ib a bl-cs" style="margin-top:16px"><h4 style="color:var(--cs)">🔐 cs_fpid 四參（UDM 2.0 — Web 必帶）</h4>
+<div style="font-size:13px;color:var(--text2);margin-bottom:10px" data-i="t7fpd">Comscore UDM 2.0 要求 Web 端在 _comscore.push 時帶入以下四個 1P ID 參數：</div>
+<table class="st">
+<tr><th style="width:20%" data-i="t7fpn">參數名稱</th><th style="width:35%" data-i="t7fpval">值</th><th data-i="t7fpdesc">說明</th></tr>
+<tr><td class="bold">cs_fpid</td><td style="font-family:var(--mono);font-size:12px" data-i="t7fp1">_ga cookie 經 SHA-256 加密後的值</td><td data-i="t7fp1d">第一方加密身份識別碼</td></tr>
+<tr><td class="bold">cs_fpit</td><td style="font-family:var(--mono)">"c"</td><td data-i="t7fp2d">ID 類型：cookie</td></tr>
+<tr><td class="bold">cs_fpdt</td><td style="font-family:var(--mono)">"d"</td><td data-i="t7fp3d">域名類型：domain</td></tr>
+<tr><td class="bold">cs_fpjsv</td><td style="font-family:var(--mono)" data-i="t7fp4v">SDK / JS 版本號</td><td data-i="t7fp4d">追蹤代碼版本，供 Comscore 後台識別</td></tr>
+</table>
+</div>
+
+<div class="nt a bl-cs"><div class="ntt" style="color:var(--cs)" data-i="t7pri">Web GTM 三大優先項（M4 必須設定）</div><ul class="nli">
+<li><span class="nm bg-cs">1</span><span data-i="t7p1">enableFirstPartyCookie: "true" — 啟用 _scor_uid 第一方 Cookie</span></li>
+<li><span class="nm bg-cs">2</span><span data-i="t7p2">beacon.js 路徑必須含 c2：/cs/18400300/beacon.js（不可用無 c2 的舊路徑）</span></li>
+<li><span class="nm bg-cs">3</span><span data-i="t7p3">cs_ucfr: "1" — 固定寫死在 GTM 標籤（台灣情境，不連動 CMP）</span></li>
+</ul></div>
+</div>
+<div class="bn"><div class="nl_"><div class="nb" onclick="goTo(5)">← GA4</div></div><div class="nc"><a class="nc" href="https://app.clickup.com/t/9018900474/NS-3427" target="_blank" rel="noopener"><span class="d" style="background:var(--cs)"></span>Comscore</a><a class="nc" href="https://app.clickup.com/t/9018900474/NS-3509" target="_blank" rel="noopener"><span class="d" style="background:var(--app)"></span>App</a><div class="nb nh" onclick="goTo(0)">⌂</div></div><div class="nr_"><div class="nb" onclick="goTo(7)">Clarity →</div></div></div>
+</div>
+
+<!-- S8: Clarity -->
+<div class="slide sl" data-slide="8">
+<div class="sh"><span class="hi">🔍</span><h2 data-i="t8t">Clarity — 行為錄影與熱點圖</h2></div>
+<div class="sb">
+<div class="a" style="font-size:15px;color:var(--text);line-height:1.7;margin-bottom:14px" data-i="t8intro">Clarity 是五個工具中最簡單的——完全獨立運作，不依賴 mpid，透過 GTM 一行設定就能全站啟用。它的核心價值是提供熱點圖 (Heatmaps) 和 Session Recordings，幫助團隊觀察使用者在新版 UI 上的真實操作行為。</div>
+<div class="cc a" style="max-width:100%"><div class="cch bg-cl" style="color:var(--white)" data-i="t8dep">部署規格</div><div class="ccb"><div class="two-col">
+<div>
+<div class="f"><div class="fl">Project ID</div><div class="fv" style="font-family:var(--mono);font-size:14px;font-weight:600">jfeo8tgt63</div></div>
+<div class="f"><div class="fl" data-i="t8ld">載入方式</div><div class="fv" data-i="t8ldv">GTM — 自訂 HTML 標籤，設為非阻斷型同步載入</div></div>
+<div class="f"><div class="fl" data-i="t8tr">觸發條件</div><div class="fv">All Pages（全站頁面瀏覽）</div></div>
+</div><div>
+<div class="f"><div class="fl" data-i="t8sc">追蹤範圍</div><div class="fv" data-i="t8scv">Web 瀏覽器全站 + App WebView（透過 GTM 同步追蹤）</div></div>
+<div class="f"><div class="fl" data-i="t8ex">排除範圍</div><div class="fv" data-i="t8exv">App 原生畫面 (Native Screens) 不植入</div></div>
+<div class="f"><div class="fl" data-i="t8dp">依賴</div><div class="fv" data-i="t8dpv">不依賴 mpid 或任何其他工具，完全獨立</div></div>
+</div></div></div></div>
+<div class="nt a bl-cl"><div class="ntt" style="color:var(--cl)" data-i="t8dod">驗收標準</div><ul class="nli">
+<li><span class="nm bg-cl">1</span><span data-i="t8d1">Network Tab 可檢索到 www.clarity.ms/tag/jfeo8tgt63 相關請求</span></li>
+<li><span class="nm bg-cl">2</span><span data-i="t8d2">Clarity Dashboard 的「Live」區塊可即時看到測試 Session</span></li>
+<li><span class="nm bg-cl">3</span><span data-i="t8d3">Clarity 載入不應造成頁面 LCP (Largest Contentful Paint) 顯著下降</span></li>
+</ul></div>
+<div class="ib a bl-cl"><h4 style="color:var(--cl)">💡 備註</h4>
+<div class="kv" style="font-size:14px"><strong data-i="t8dl">數據延遲：</strong><span data-i="t8dlv">Recordings 處理時間通常 30 分鐘至 2 小時，非即時</span></div>
+<div class="kv" style="font-size:14px"><strong data-i="t8ts">測試站：</strong><span data-i="t8tsv">若需在測試站驗證，需在 Clarity 專案設定中開放該 domain 權限</span></div>
+</div>
+</div>
+<div class="bn"><div class="nl_"><div class="nb" onclick="goTo(6)">← Comscore</div></div><div class="nc"><a class="nc" href="https://app.clickup.com/t/9018900474/NS-3370" target="_blank" rel="noopener"><span class="d" style="background:var(--cl)"></span>Clarity</a><div class="nb nh" onclick="goTo(0)">⌂</div></div><div class="nr_"><div class="nb" onclick="goTo(8)" data-i="navEnd">結尾 →</div></div></div>
+</div>
+
+<!-- S9: Closing -->
+<div class="slide sd" data-slide="9">
+<div class="sub a">Summary</div>
+<h1 class="a" style="margin-top:4px" data-i="t9">數據追蹤規格說明完畢</h1>
+<div class="a" style="font-size:16px;color:var(--text2);margin-top:8px" data-i="t9d">詳細欄位請參照各工具 PRD 與 Google Sheet 埋點表</div>
+<div class="ls a"><h3 data-i="cuT">ClickUp 開發卡片</h3><div class="lg">
+<a class="lc" href="https://app.clickup.com/t/9018900474/NS-3428" target="_blank" rel="noopener"><span class="d" style="background:var(--id)"></span>ID Sync</a>
+<a class="lc" href="https://app.clickup.com/t/9018900474/NS-3454" target="_blank" rel="noopener"><span class="d" style="background:var(--mp)"></span>mParticle</a>
+<a class="lc" href="https://app.clickup.com/t/9018900474/NS-3426" target="_blank" rel="noopener"><span class="d" style="background:var(--ga)"></span>GA4</a>
+<a class="lc" href="https://app.clickup.com/t/9018900474/NS-3427" target="_blank" rel="noopener"><span class="d" style="background:var(--cs)"></span>Comscore</a>
+<a class="lc" href="https://app.clickup.com/t/9018900474/NS-3370" target="_blank" rel="noopener"><span class="d" style="background:var(--cl)"></span>Clarity</a>
+<a class="lc" href="https://app.clickup.com/t/9018900474/NS-3509" target="_blank" rel="noopener"><span class="d" style="background:var(--app)"></span>App Comscore</a>
+<a class="lc" href="https://app.clickup.com/t/9018900474/NS-2904" target="_blank" rel="noopener"><span class="d" style="background:var(--app)"></span>App GA4</a>
+<a class="lc" href="https://app.clickup.com/t/9018900474/NS-3429" target="_blank" rel="noopener"><span class="d" style="background:var(--app)"></span>App mParticle</a>
+</div></div>
+<div class="bn" style="position:absolute;bottom:0;left:0;right:0"><div class="nl_"><div class="nb" onclick="goTo(7)">← Clarity</div></div><div class="nc"><div class="nb nh" onclick="goTo(0)">⌂</div></div><div class="nr_"></div></div>
+</div>
+
+</div>
+<div class="nav-arrow left" onclick="goTo(current-1)">‹</div>
+<div class="nav-arrow right" onclick="goTo(current+1)">›</div>
+
+<script>
+const slides=document.querySelectorAll('.slide');let current=0;const total=slides.length;let lang='zh';
+const en={
+t1:'M4 Data Tracking Spec',t1sub:'Data Tracking Spec — Web + App',
+t1ar:'Architecture — Timing & Environment',t1ars:'Why is identity the foundation of everything? How do five tools connect?',
+t1c1:'Identity Core',t1c3:'Analytics',t1c4:'Audience Measurement',t1c5:'Behavior Recording',cuT:'ClickUp Dev Cards',
+t2a:'Architecture — Why ID Comes First',
+t2intro:'<strong>Core problem:</strong> TVBS M4 uses five tracking tools simultaneously. Three of them (mParticle, GA4, Comscore) require the same "ID card" (mpid) for user attribution. If the first page view event fires before mpid is obtained, that data point becomes "headless" — it cannot be attributed or matched cross-platform. <strong style="color:var(--id)">ID Sync SDK ensures the ID is ready before any tracking tag fires.</strong>',
+t2seqt:'📐 Web Page Load Sequence',t2s1:'hard-code in _document.tsx <head>, top position. GTM is FORBIDDEN.',t2s2:'Auto-loaded by ID Sync internally, no separate import needed',t2s3:'SDK ready → get mpid, resolve global Promise',t2s4:'Push to GTM DataLayer, carrying mpid',t2s5a:'Set User Property: mpid',t2s5b:'Native API, NOT via GTM',
+t2part:'⚡ Parallel Loading',t2pard:'These tools do NOT wait for mpid, loading simultaneously',t2cs:'GTM All Pages · carries cs_fpid (SHA-256 of _ga cookie)',t2cl:'GTM All Pages · fully independent, no ID dependency whatsoever',
+t2timeout:'⏱ Timeout Fallback',t2tov:'If SDK not ready in 5s (e.g. ad-blocker blocks it) → Promise resolve(undefined). Downstream modules decide whether to send with empty mpid. Page itself unaffected.',
+navOv:'⌂ Overview',navEnv:'Environment →',
+t2b:'Architecture — Web / App / WebView',t3intro:'Same tracking logic, different implementation across three environments. <strong>WebView</strong> is the most complex — when a user opens a webpage inside the App, both Web SDK and App SDK coexist. Without proper handling, events fire twice. That is why we need <strong>Bridge</strong> mechanisms: they let the Web SDK detect it is inside an App, stop sending events itself, and hand data to the Native SDK for unified delivery.',
+e1w:'hard-code <head> top position',e1a:'Not used (App uses mParticle Native SDK)',e1v:'Same as Web; events routed to Native via Bridge',
+e2w:'Built into ID Sync; logPageView native API',e2a:'Native SDK installed directly; logScreen API',e2v:'WebView Bridge mode: Web SDK becomes relay, Native sends (no duplicates)',
+e3w:'GTM: mpid_ready → Config Tag → Event Tag',e3a:'Firebase SDK: wait mpid → setUserProperty → logEvent',e3v:'Custom JS Bridge: page_view renamed to screen_view → Native Firebase fires',
+e4w:'GTM Custom HTML / All Pages',e4a:'Comscore Native SDK (standalone install, not via mParticle)',e4v:'Uses Web GTM (same as Web)',
+e5w:'GTM Custom HTML / All Pages',e5a:'N/A (native screens not instrumented)',e5v:'Uses Web GTM (same as Web)',
+t3brt:'What is a Bridge? Why two separate ones?',t3brd:'A Bridge is a communication channel pre-injected by App developers into the WebView. Web frontend uses JavaScript to detect whether this channel exists — if it does, that means the code is running inside an App, so it passes event data through the channel to the Native SDK for unified delivery. This prevents both Web and App from sending the same event twice.',
+t3b1a:'AnalyticsWebInterface (addJavascriptInterface)',t3b1i:'firebase channel (WKScriptMessageHandler)',t3b1n:'Detects Bridge → page_view renamed to screen_view + display_mode=app_webview',
+t3b2k:'Config:',t3b2v:'requiredWebviewBridgeName: "tvbsNewsbridge"',t3b2w:'Important:',t3b2wv:'Bridge name must match EXACTLY between Web and Native',t3b2n:'Two Bridges operate independently, do not interfere',
+navSeq:'← Timing',
+t4t:'ID Sync SDK — Site-wide Identity Core',t4intro:'<strong style="color:var(--id)">ID Sync SDK has one single purpose:</strong> consolidate Web-side Identity, ensuring every tracking event carries the correct ID card (mpid). It internally wraps mParticle SDK, handles initialization and mpid generation. Once mpid is ready, GA4, mParticle Screen View, and Comscore can properly attribute users.',
+t4why:'Why Must It Be Hard-coded?',t4r1l:'1. Incognito Defense',t4r1v:'Ad-blockers may block GTM entirely, killing the identity mechanism',t4r2l:'2. Timing Guarantee',t4r2v:'Ensures mpid is ready before any GA4 or marketing tag fires — no "headless data"',t4r3l:'3. Infrastructure Grade',t4r3v:'Same priority level as core CSS/JS — cannot be optionally loaded or deferred',
+t4params:'Parameters',t4prod:'Production API Key',t4test:'Sandbox API Key',
+t4prom:'🔗 Promise Bridge (Recommended Implementation)',t4p1:'Core concept:',t4p1v:'Create global window.mParticleMpIdReadyPromise — all downstream modules (GA4, mParticle Screen View) await the same Promise to get mpid',t4p2:'onReady callback:',t4p2v:'SDK fires callback when ready but passes NO arguments — must call getMPID() inside callback then resolve',t4p3:'Timeout fallback:',t4p3v:'5 seconds without ready (e.g. ad-blocker) → resolve(undefined), prevents entire tracking from deadlocking',
+t4dod:'Definition of Done',t4d1:'Console: await window.mParticleMpIdReadyPromise → returns mpid string (e.g. "1234567890123")',t4d2:'With Ad-blocker: resolves undefined after 5s, page layout and functionality unaffected',t4d3:'View HTML source → idsync script must appear BEFORE gtm.js',
+t5t:'mParticle (CDP) — Screen View Tracking',t5wl:'Load Method',t5wlv:'Auto-loaded by ID Sync SDK internally, no separate import needed',t5wa:'Event Delivery',t5wav:'Native API mParticle.logPageView(), NOT via GTM DataLayer',t5wr:'Why not GTM?',t5wrv:'SPA fast navigation causes GTM async trigger matching to miss events; native API adds less than 1KB code',
+t5as:'mParticle Native SDK (iOS/Android, installed separately, not via ID Sync)',t5aa:'Event Delivery',t5ai:'Identity',t5aiv:'MVP: no login mechanism, anonymous visitor mpid only; login()/logout() not implemented yet',
+t5ev:'Screen View Events (MVP: 6 total)',t5p:'Platform',t5wc:'Web Attrs',t5ac:'App Attrs',t5pg:'Trigger Page',t5sheet:'📋 Detailed field definitions: see CDP Tracking Plan (Google Sheet)',
+t5br:'🌉 WebView Bridge (Prevent Duplicate Events)',t5b1:'Problem:',t5b1v:'In App WebView, Web SDK and Native SDK both fire events → duplicate counting',t5b2:'Solution:',t5b2v:'Add requiredWebviewBridgeName: "tvbsNewsbridge" in Web config → Web SDK switches to relay mode',t5b3:'Critical:',t5b3v:'Bridge name must match EXACTLY between Web and Native (tvbsNewsbridge), otherwise events still duplicate',
+t6t:'GA4 — Analytics',t6gtm:'Web GTM Dual Tag Sequence',t6mvp:'MVP Events (4 total)',t6en:'Event Name',t6ep:'Platform',t6ed:'Description',
+t6e1:'All Web pages, 15+ news-specific params (author, journalist, category, tags, etc.)',t6e2:'All App native screens + WebView pages forwarded via Bridge',t6e3:'Cross-platform search: search_term, search_type, result_count',t6e4:'App only: push notification click (push_date, notify_title, notify_type)',
+t6wvt:'🔀 App Native vs WebView — GA4 Routing Key Point',t6wvd:'<strong>App native screens (home, category, member, etc.):</strong> Firebase SDK sends screen_view directly, display_mode = <code>app_native</code>',t6wvw:'<strong>App WebView (article, search, etc.):</strong> Web frontend detects JS Bridge → renames page_view to screen_view, overwrites display_mode to <code>app_webview</code> → calls Native Bridge to fire via Firebase',t6wvb:'<strong>Bridge detection:</strong> Android checks <code>window.AnalyticsWebInterface</code> · iOS checks <code>window.webkit.messageHandlers.firebase</code>',
+t6key:'Key Notes',t6k1:'mpid_ready must be pushed BEFORE tvbs_page_view, otherwise GA4 first event lacks mpid',t6k2:'Web display_mode is always "web"; WebView MUST overwrite to "app_webview"',t6k3:'Phase 2: video_start/progress/complete, share, scroll, and other interaction events',
+t7t:'Comscore — Audience Measurement',t7trig:'Trigger',t7gtm:'RD builds new Container (do NOT reuse existing GTM-PHFLV7B)',t7ucfr:'Hardcoded "1" (Taiwan context, no CMP linkage)',t7fpc:'"true" → enables 1P Cookie _scor_uid',
+t7as:'Comscore iOS SDK 6.16.0 / Android SDK 6.12.1',t7inst:'Installation',t7instv:'Standalone install, NOT via mParticle kit forwarding',t7an:'Warning',t7anv:'Publisher Secret must NOT be committed to version control',
+t7fpd:'Comscore UDM 2.0 requires Web to include these four 1P ID parameters when calling _comscore.push:',t7fpn:'Parameter',t7fpval:'Value',t7fpdesc:'Description',
+t7fp1:'SHA-256 hash of _ga cookie value',t7fp1d:'First-party encrypted identity',t7fp2d:'ID type: cookie',t7fp3d:'Domain type: domain',t7fp4v:'SDK / JS version number',t7fp4d:'Tracking code version for Comscore backend',
+t7pri:'Web GTM Top 3 Priorities (M4 Must-Configure)',t7p1:'enableFirstPartyCookie: "true" — enables _scor_uid first-party Cookie',t7p2:'beacon.js path MUST include c2: /cs/18400300/beacon.js (legacy path without c2 is FORBIDDEN)',t7p3:'cs_ucfr: "1" — hardcoded in GTM tag (Taiwan context, no CMP dynamic linkage)',
+t8t:'Clarity — Behavior Recording & Heatmaps',t8intro:'Clarity is the simplest of the five tools — fully independent, no mpid dependency, one GTM configuration enables site-wide tracking. Its core value is providing Heatmaps and Session Recordings to help the team observe real user interactions on the new UI.',
+t8dep:'Deployment Spec',t8ld:'Load Method',t8ldv:'GTM — Custom HTML tag, set to non-blocking synchronous loading',t8tr:'Trigger',t8sc:'Tracking Scope',t8scv:'All Web browsers + App WebView (via GTM sync)',t8ex:'Excluded',t8exv:'App native screens (Native Screens) not instrumented',t8dp:'Dependency',t8dpv:'No mpid or any other tool dependency, fully standalone',
+t8dod:'Definition of Done',t8d1:'Network Tab shows www.clarity.ms/tag/jfeo8tgt63 request',t8d2:'Clarity Dashboard "Live" section shows test sessions in real-time',t8d3:'Clarity loading must not cause significant LCP (Largest Contentful Paint) degradation',
+t8dl:'Data Latency:',t8dlv:'Recording processing typically takes 30 minutes to 2 hours, not real-time',t8ts:'Test Site:',t8tsv:'If testing on staging, must whitelist that domain in Clarity project settings',
+navEnd:'Closing →',t9:'Data Tracking Spec Complete',t9d:'See individual tool PRDs and Google Sheet for detailed field definitions',
+};
+const zhTexts={};document.querySelectorAll('[data-i]').forEach(el=>{zhTexts[el.getAttribute('data-i')]=el.textContent||el.innerHTML;});
+const htmlKeys=['t2intro','t3intro','t4intro','t6wvd','t6wvw','t6wvb','t8intro'];
+function setLang(l){
+  lang=l;
+  document.querySelectorAll('.lt button').forEach(b=>b.classList.toggle('active',b.textContent===(l==='zh'?'中文':'EN')));
+  document.querySelectorAll('[data-i]').forEach(el=>{
+    const k=el.getAttribute('data-i');
+    if(htmlKeys.includes(k)){el.innerHTML=l==='en'?(en[k]||zhTexts[k]):zhTexts[k]}
+    else{el.textContent=l==='en'?(en[k]||zhTexts[k]):zhTexts[k]}
+  });
+}
+function goTo(n){if(n<0||n>=total)return;slides[current].classList.remove('active');slides[current].querySelectorAll('.a').forEach(el=>{el.style.animation='none';void el.offsetHeight;el.style.animation=''});current=n;slides[current].classList.add('active')}
+document.addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key==='ArrowDown'||e.key===' '){e.preventDefault();goTo(current+1)}if(e.key==='ArrowLeft'||e.key==='ArrowUp'){e.preventDefault();goTo(current-1)}if(e.key==='Home'){e.preventDefault();goTo(0)}if(e.key==='End'){e.preventDefault();goTo(total-1)}if(e.key==='f'||e.key==='F'){if(!document.fullscreenElement)document.documentElement.requestFullscreen();else document.exitFullscreen()}});
+</script>
+</body>
+</html>
