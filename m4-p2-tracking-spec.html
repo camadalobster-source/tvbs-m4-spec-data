@@ -212,21 +212,21 @@ html,body{width:100vw;height:100vh;overflow:hidden;background:var(--bg);font-fam
 <div class="slide sl" data-slide="2">
 <div class="sh"><span class="hi">🗺️</span><h2 data-i="t2a">架構 — 為什麼 ID 是一切的前提</h2></div>
 <div class="sb">
-<div class="why a"><div class="why-icon">🎯</div><div class="why-text" data-i="t2intro"><strong>目的：</strong>為了讓所有追蹤工具共用同一張身分證 (mpid)，使 Web 和 App 的使用者數據能跨平台歸戶比對。如果第一筆事件在 mpid 取得前就發出，該筆數據就會「斷頭」——無法歸戶。<strong style="color:var(--id)">因此 ID Sync SDK 必須在所有追蹤標籤之前完成載入。</strong></div></div>
+<div class="why a"><div class="why-icon">🎯</div><div class="why-text" data-i="t2intro"><strong>目的：</strong>為了讓所有追蹤工具共用同一張身分證 (mpid)，使 Web 和 App 的使用者數據能跨平台歸戶比對。<strong style="color:var(--id)">ID Sync SDK 放在 &lt;head&gt; 最前面盡早啟動，</strong>但 SDK 以 async 方式載入，與 GTM 之間無內建同步機制——mpid 未就緒時事件先以空值送出，SDK 會在背景持續處理並補齊身分。</div></div>
 
 <div class="sec-title a" data-i="t2seqt">📐 Web 端載入時序</div>
 <div class="a" style="display:flex;gap:30px;align-items:flex-start">
 <div class="vflow" style="flex:1;max-width:520px">
-<div class="vf-step"><div class="vf-num bg-id">1</div><div class="vf-box bg-id">ID Sync SDK 載入（優先於 GTM）<div class="vf-sub" data-i="t2s1">放在 &lt;head&gt; 最頂端，優先於 GTM 載入。內建載入 mParticle + Insider（Insider MVP 不啟用）</div></div></div>
+<div class="vf-step"><div class="vf-num bg-id">1</div><div class="vf-box bg-id">ID Sync SDK 盡早載入<div class="vf-sub" data-i="t2s1">放在 &lt;head&gt; 最前面盡早啟動（async 載入，非阻斷）。內建載入 mParticle + Insider（Insider MVP 不啟用）</div></div></div>
 <div class="vf-arrow">↓</div>
 <div class="vf-step"><div class="vf-num bg-mp">2</div><div class="vf-box bg-mp">mParticle SDK 自動初始化<div class="vf-sub" data-i="t2s2">ID Sync 內部自動載入，前端不需另外引入任何程式碼</div></div></div>
 <div class="vf-arrow">↓</div>
-<div class="vf-step"><div class="vf-num" style="background:var(--text)">3</div><div class="vf-box" style="background:var(--text)">取得身分證 (mpid) + 會員 ID (tvbs_uid)<div class="vf-sub" data-i="t2s3">SDK 準備好後取得 mpid，同時讀取 tvbs_uid Cookie，然後通知所有在等候的模組</div></div></div>
+<div class="vf-step"><div class="vf-num" style="background:var(--text)">3</div><div class="vf-box" style="background:var(--text)">SDK 背景取得 mpid + 讀取 tvbs_uid<div class="vf-sub" data-i="t2s3">SDK 在背景持續處理 mpid 取得。onReady callback 為通知型，不阻塞其他程式碼。mpid 未就緒時事件以空值送出</div></div></div>
 <div class="vf-arrow">↓</div>
-<div class="vf-step"><div class="vf-num bg-ga">4</div><div class="vf-box bg-ga">推送 mpid_ready 給 GTM（帶 mpid + user_id）<div class="vf-sub" data-i="t2s4">GA4 Config Tag 以此事件為觸發條件，收到後才開始初始化</div></div></div>
+<div class="vf-step"><div class="vf-num bg-ga">4</div><div class="vf-box bg-ga">前端推送 mpid + user_id 給 GTM<div class="vf-sub" data-i="t2s4">前端先推 mpid_ready（帶 getMPID() 當下值，未就緒帶空字串），再推 tvbs_page_view</div></div></div>
 <div class="vf-arrow">↓ <span data-i="x_split">分流</span></div>
 <div class="vf-split">
-<div class="vf-split-box bg-ga">GA4 設定 User Properties<div class="vf-sub" data-i="t2s5a">mpid + user_id → 後續所有事件自動帶入</div></div>
+<div class="vf-split-box bg-ga">GA4 設定 User Properties<div class="vf-sub" data-i="t2s5a">設定 User Properties（有值帶入，空值後續由 SDK 補齊）</div></div>
 <div class="vf-split-box bg-mp">mParticle 發送 Screen View<div class="vf-sub" data-i="t2s5b">建議用原生 API 發送，是否走 GTM 由 RD 評估</div></div>
 </div>
 </div>
@@ -235,7 +235,7 @@ html,body{width:100vw;height:100vh;overflow:hidden;background:var(--bg);font-fam
 <div style="font-size:14px;color:var(--text2);margin-bottom:10px" data-i="t2pard">以下工具不等 mpid，跟上面的時序鏈同時啟動</div>
 <div class="side-box" style="border-left:4px solid var(--cs)"><h5 style="color:var(--cs)">📡 Comscore</h5><p data-i="t2cs">GTM 全站載入，帶 cs_fpid（_ga cookie 加密值）</p></div>
 <div class="side-box" style="border-left:4px solid var(--cl)"><h5 style="color:var(--cl)">🔍 Clarity</h5><p data-i="t2cl">GTM 全站載入，完全獨立，不需要任何 ID</p></div>
-<div class="side-box" style="border-left:4px solid var(--id)"><h5 style="color:var(--id)">⏱ 逾時防呆</h5><p data-i="t2tov">若 5 秒內 SDK 未就緒（例如被廣告攔截器擋掉），自動放行讓頁面繼續運作，該筆事件不帶身分證但不影響網站功能</p></div>
+<div class="side-box" style="border-left:4px solid var(--id)"><h5 style="color:var(--id)">🔄 SDK 背景補齊</h5><p data-i="t2tov">SDK 持續在背景處理 mpid 取得與更新。前端不需建立任何等待機制——mpid 未就緒時事件先送出，SDK 取得後自行補齊身分</p></div>
 </div>
 </div>
 </div>
@@ -246,13 +246,13 @@ html,body{width:100vw;height:100vh;overflow:hidden;background:var(--bg);font-fam
 <div class="slide sl" data-slide="3">
 <div class="sh"><span class="hi">🗺️</span><h2 data-i="t2b">架構 — Web / App / WebView 環境對照</h2></div>
 <div class="sb">
-<div class="why a"><div class="why-icon">🌐</div><div class="why-text" data-i="t3intro"><strong>數據追求的目標：</strong>App 使用者不論開啟原生畫面或 WebView（App 內開啟的非原生頁面，不僅限於文章頁），都只送 screen_view，不會被切成額外的工作階段 (session)。<strong>Bridge（橋樑）</strong>的作用是讓 Web SDK 偵測到自己在 App 內時，把事件轉交給 App 端統一發送，維持單一 session。</div></div>
+<div class="why a"><div class="why-icon">🌐</div><div class="why-text" data-i="t3intro"><strong>數據追求的目標：</strong>App 使用者不論開啟原生畫面或 WebView，都只送 screen_view，維持單一 session。<strong>Bridge（橋樑）</strong>讓 Web SDK 偵測到自己在 App 內時，把事件轉交 App 統一發送。<strong>MVP 階段 GA4 Bridge 僅實作文章頁</strong>，其他頁面列 Phase 2。</div></div>
 
 <table class="et a">
 <tr><th style="width:12%" data-i="x_tool">工具</th><th style="width:29%"><span class="tag tag-w">Web</span> <span data-i="x_browser">瀏覽器</span></th><th style="width:29%"><span class="tag tag-a">App</span> <span data-i="x_native">原生</span></th><th style="width:30%"><span class="tag tag-v">WebView</span> <span data-i="x_webview">App 內開網頁</span></th></tr>
 <tr><td style="font-weight:800;color:var(--id)">ID Sync</td><td data-i="x_e1w">放在 &lt;head&gt;，優先於 GTM 載入</td><td data-i="x_e1a">不使用（App 用 mParticle Native SDK）</td><td data-i="x_e1v">同 Web，事件透過 Bridge 轉回 App</td></tr>
 <tr><td style="font-weight:800;color:var(--mp)">mParticle</td><td data-i="x_e2w">ID Sync 內建載入；用原生 API 發送事件</td><td data-i="x_e2a">Native SDK 直接安裝；logScreen API</td><td data-i="x_e2v">Web SDK 偵測 Bridge 後轉為中介，事件由 App 統一發送</td></tr>
-<tr><td style="font-weight:800;color:var(--ga2)">GA4</td><td data-i="x_e3w">GTM：等 mpid_ready → 初始化 → 發送事件</td><td data-i="x_e3a">Firebase SDK：等 mpid → 設定 User Properties → logEvent</td><td data-i="x_e3v">前端偵測 Bridge → page_view 改名 screen_view → 交給 App Firebase</td></tr>
+<tr><td style="font-weight:800;color:var(--ga2)">GA4</td><td data-i="x_e3w">GTM：等 mpid_ready → 初始化 → 發送事件</td><td data-i="x_e3a">Firebase SDK：等 mpid → 設定 User Properties → logEvent</td><td data-i="x_e3v">前端偵測 Bridge → page_view 改名 screen_view → App Firebase（MVP 僅文章頁）</td></tr>
 <tr><td style="font-weight:800;color:var(--cs)">Comscore</td><td data-i="x_e4w">GTM 全站載入</td><td data-i="x_e4a">Comscore Native SDK（獨立安裝）</td><td data-i="x_e4v">走 Web GTM（同 Web）</td></tr>
 <tr><td style="font-weight:800;color:var(--cl)">Clarity</td><td data-i="x_e5w">GTM 全站載入</td><td data-i="x_e5a">不適用（App 原生不植入）</td><td data-i="x_e5v">走 Web GTM（同 Web）</td></tr>
 </table>
@@ -265,7 +265,7 @@ html,body{width:100vw;height:100vh;overflow:hidden;background:var(--bg);font-fam
 <div class="side-box" style="border-left:4px solid var(--mp)"><h5 style="color:var(--mp)" data-i="x_mpbr">mParticle Bridge — SDK 內建</h5>
 <p data-i="x_mpbrd">Web 前端：config 加一行 bridge name · App 端：初始化時綁定同名 Bridge · SDK 自動處理：偵測環境 + 切換中介模式</p></div>
 </div>
-<div style="background:#FFF3E0;padding:10px 14px;border-radius:6px;font-size:14px;color:#E65100;font-weight:600;margin-top:14px" data-i="x_bridge_discuss">💬 Bridge 的具體實作範圍與涵蓋頁面，待 RD 研究討論確認</div>
+<div style="background:#FFF3E0;padding:10px 14px;border-radius:6px;font-size:14px;color:#E65100;font-weight:600;margin-top:14px" data-i="x_bridge_discuss">📌 MVP：GA4 JS Bridge 僅實作文章頁，其他頁面列 Phase 2。mParticle Bridge 適用範圍待確認</div>
 </div>
 <div class="pb a" data-i="x_pb">先有身分（mpid），才有事件 <em>｜</em> ID Sync 必須在所有追蹤標籤之前載入</div>
 </div>
@@ -280,21 +280,21 @@ html,body{width:100vw;height:100vh;overflow:hidden;background:var(--bg);font-fam
 
 <div class="sec-title a" data-i="x_result">📋 結果（驗收標準）</div>
 <div class="nt a bl-id"><ul class="nli">
-<li><span class="nm bg-id">1</span><span data-i="t4d1">Console 執行 await window.mParticleMpIdReadyPromise → 回傳 mpid 字串（如 "1234567890123"）</span></li>
-<li><span class="nm bg-id">2</span><span data-i="t4d2">開啟 Ad-blocker 重整 → 5 秒後自動放行，頁面功能與排版不受影響</span></li>
-<li><span class="nm bg-id">3</span><span data-i="t4d3">網頁原始碼中，ID Sync 排在 GTM 之前載入</span></li>
+<li><span class="nm bg-id">1</span><span data-i="t4d1">HTML 原始碼中 ID Sync script 標籤排在 GTM 容器碼之前（確保盡早啟動）</span></li>
+<li><span class="nm bg-id">2</span><span data-i="t4d2">頁面載入後追蹤事件正常發送，不因 mpid 未就緒而卡住或延遲</span></li>
+<li><span class="nm bg-id">3</span><span data-i="t4d3">SDK 背景取得 mpid 後，後續事件自動帶入正確身分</span></li>
 </ul></div>
 
 <div class="sec-title a" data-i="x_rules">📏 規則</div>
 <div class="nt a" style="border-left:4px solid var(--text)"><ul class="nli">
-<li><span class="nm" style="background:var(--text)">!</span><span data-i="t4rule1">放在 &lt;head&gt; 優先載入，確保 mpid 在 GTM 內的追蹤標籤觸發前已就緒</span></li>
-<li><span class="nm" style="background:var(--text)">!</span><span data-i="t4rule2">前端不可在 mpid 就緒前發送任何追蹤事件（否則該筆數據缺少身分證）</span></li>
-<li><span class="nm" style="background:var(--text)">!</span><span data-i="t4rule3">5 秒逾時後 resolve(undefined)，下游模組自行決定是否帶空值送出</span></li>
+<li><span class="nm" style="background:var(--text)">!</span><span data-i="t4rule1">放在 &lt;head&gt; 最前面，盡早開始載入（async 非阻斷，不保證在 GTM 前完成）</span></li>
+<li><span class="nm" style="background:var(--text)">!</span><span data-i="t4rule2">前端不需建立任何等待或阻塞機制。mpid 未就緒時事件以空值送出即可</span></li>
+<li><span class="nm" style="background:var(--text)">!</span><span data-i="t4rule3">SDK 會在背景持續處理 mpid 取得與更新，取得後自行處理身分同步，前端不需介入</span></li>
 </ul></div>
 
 <div class="sec-title a" data-i="x_how_brief">🔧 做法（簡要）</div>
 <div class="role a">
-<div class="role-item"><h5 data-i="x_fedev">🖥 前端 RD</h5><p data-i="t4do1">在 &lt;head&gt; 中放入 ID Sync script（優先於 GTM），加上 Promise 橋樑程式碼，所有追蹤邏輯 await 這個 Promise 再發送</p></div>
+<div class="role-item"><h5 data-i="x_fedev">🖥 前端 RD</h5><p data-i="t4do1">在 &lt;head&gt; 中放入 ID Sync script（排在 GTM 前面）。前端不需實作 Promise 或 Callback 等待——直接發送事件，SDK 背景處理身分</p></div>
 <div class="role-item"><h5 data-i="x_datateam">📊 Data Team</h5><p data-i="t4do2">提供 API Key 與 SDK URL，管理 mParticle Data Plan (tvbs_plan_v2)</p></div>
 </div>
 
@@ -370,21 +370,21 @@ html,body{width:100vw;height:100vh;overflow:hidden;background:var(--bg);font-fam
 
 <div class="sec-title a" data-i="x_result">📋 結果（驗收標準）</div>
 <div class="nt a bl-ga"><ul class="nli">
-<li><span class="nm bg-ga">1</span><span data-i="t6d1">GA4 DebugView 可看到 page_view 事件，且 User Properties 含 mpid 和 user_id</span></li>
+<li><span class="nm bg-ga">1</span><span data-i="t6d1">GA4 DebugView 可看到 page_view 事件，User Properties 含 mpid 和 user_id（首次可能為空值，後續事件應帶入）</span></li>
 <li><span class="nm bg-ga">2</span><span data-i="t6d2">WebView 內的事件在 Firebase 報表中顯示為 screen_view（display_mode = app_webview）</span></li>
 <li><span class="nm bg-ga">3</span><span data-i="t6d3">搜尋頁觸發 search 事件，帶有 search_term 和 result_count</span></li>
 </ul></div>
 
 <div class="sec-title a" data-i="x_rules">📏 規則</div>
 <div class="nt a" style="border-left:4px solid var(--text)"><ul class="nli">
-<li><span class="nm" style="background:var(--id)">!</span><span data-i="t6rule1">mpid_ready 必須在 tvbs_page_view <strong>之前</strong>推送（順序錯 = 第一筆事件缺身分證）</span></li>
-<li><span class="nm" style="background:var(--id)">!</span><span data-i="t6rule2">Web 的 display_mode 固定填 'web'；WebView 必須覆寫為 'app_webview'</span></li>
+<li><span class="nm" style="background:var(--id)">!</span><span data-i="t6rule1">mpid_ready 仍須在 tvbs_page_view 之前推送。mpid 帶 getMPID() 當下值，未就緒帶空字串 ""，不需等待</span></li>
+<li><span class="nm" style="background:var(--text2)">—</span><span data-i="t6rule2">display_mode 參數本次 MVP 不發送（WebView 認定範圍尚未釐清，列為 POSTPONED）</span></li>
 <li><span class="nm" style="background:var(--id)">!</span><span data-i="t6rule3">無資料時傳空字串 "" ，不可省略 Key</span></li>
 </ul></div>
 
 <div class="sec-title a" data-i="x_gtmseq">⚙ GTM 雙 Tag 時序</div>
 <div class="a" style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
-<div style="padding:10px 18px;border-radius:8px;background:var(--ga2);color:var(--white);font-size:15px;font-weight:600;text-align:center" data-i="x_configtag">① GA4 Config Tag<div style="font-size:12px;opacity:.75;margin-top:2px" data-i="x_configsub">觸發：mpid_ready · 設定 User Properties</div></div>
+<div style="padding:10px 18px;border-radius:8px;background:var(--ga2);color:var(--white);font-size:15px;font-weight:600;text-align:center" data-i="x_configtag">① GA4 Config Tag<div style="font-size:12px;opacity:.75;margin-top:2px" data-i="x_configsub">設定 User Properties（mpid + user_id）</div></div>
 <div style="font-size:22px;color:var(--text2)">→</div>
 <div style="padding:10px 18px;border-radius:8px;background:var(--ga);color:var(--text);font-size:15px;font-weight:600;text-align:center" data-i="x_eventtag">② GA4 Event Tag<div style="font-size:12px;opacity:.75;margin-top:2px" data-i="x_eventsub">觸發：tvbs_page_view / search · 發送實際事件</div></div>
 </div>
@@ -396,24 +396,26 @@ html,body{width:100vw;height:100vh;overflow:hidden;background:var(--bg);font-fam
 <tr><td class="bold">user_id</td><td>tvbs_uid Cookie</td><td data-i="x_uidesc">TVBS 會員識別碼</td><td data-i="x_empty">空字串 ""</td><td data-i="x_filluid">填入 tvbs_uid</td></tr>
 </table>
 <div class="role a" style="margin-top:8px">
-<div class="role-item"><h5 data-i="x_websetup">🖥 Web 設定</h5><p data-i="t6upweb">GTM Config Tag 的 User Properties 區塊映射 DataLayer 變數，前端推送 mpid_ready 時一併帶上 mpid + user_id</p></div>
+<div class="role-item"><h5 data-i="x_websetup">🖥 Web 設定</h5><p data-i="t6upweb">GTM Config Tag 的 User Properties 映射 DataLayer 變數。mpid 有值時帶入，未就緒時帶空值，SDK 背景補齊後後續事件自動帶入</p></div>
 <div class="role-item"><h5 data-i="x_appsetup">📱 App 設定</h5><p data-i="t6upapp">Firebase SDK 初始化後呼叫 setUserProperty("mpid", value) 和 setUserProperty("user_id", value)</p></div>
 </div>
 
-<div class="sec-title a" data-i="x_appvswebview">🔀 App 原生 vs WebView 分流（必須實作）</div>
+<div class="sec-title a" data-i="x_appvswebview">🔀 App 原生 vs WebView 分流（MVP 僅文章頁）</div>
 <div class="ib a" style="border-left:4px solid #6A1B9A">
-<div class="kv" style="margin-bottom:10px"><strong style="color:var(--ga2)">App 原生畫面：</strong><span data-i="t6wvd">Firebase SDK 直接發送 screen_view，display_mode = app_native</span></div>
-<div class="kv" style="margin-bottom:10px"><strong style="color:var(--ga2)">App 內 WebView：</strong><span data-i="t6wvw">Web 前端偵測 Bridge → page_view 改名 screen_view → display_mode 覆寫 app_webview → 呼叫 Native Bridge 交給 Firebase 發送</span></div>
+<div class="kv" style="margin-bottom:10px"><strong style="color:var(--ga2)">App 原生畫面：</strong><span data-i="t6wvd">Firebase SDK 直接發送 screen_view</span></div>
+<div class="kv" style="margin-bottom:10px"><strong style="color:var(--ga2)">App 內 WebView：</strong><span data-i="t6wvw">Web 前端偵測 Bridge → page_view 改名 screen_view → 呼叫 Native Bridge 交給 Firebase 發送（MVP 僅文章頁）</span></div>
 <div class="kv"><strong style="color:var(--ga2)">Bridge 偵測方式：</strong><span data-i="t6wvb">Android 檢查 window.AnalyticsWebInterface · iOS 檢查 window.webkit.messageHandlers.firebase</span></div>
-<div style="background:#FFF3E0;padding:8px 12px;border-radius:6px;font-size:13px;color:#E65100;font-weight:600;margin-top:10px" data-i="x_ga4_bridge_discuss">💬 WebView 涵蓋範圍：App 開啟的所有非原生頁面（不僅限文章頁），具體範圍待 RD 研究確認</div>
+<div style="background:#FFF3E0;padding:8px 12px;border-radius:6px;font-size:13px;color:#E65100;font-weight:600;margin-top:10px" data-i="x_ga4_bridge_discuss">📌 MVP 範圍：JS Bridge 本期僅實作文章頁。其他頁面的 WebView 偵測列為 Phase 2</div>
 </div>
 
-<div class="sec-title a" data-i="x_mvpevents">📊 MVP 事件（4 個）</div>
+<div class="sec-title a" data-i="x_mvpevents">📊 MVP 事件（6 個）</div>
 <table class="st a"><tr><th data-i="x_evname">事件名稱</th><th data-i="x_evplat">平台</th><th data-i="x_evdesc">說明</th></tr>
 <tr><td class="bold">page_view</td><td><span class="tag tag-w">Web</span></td><td data-i="x_ga_e1">所有 Web 畫面，帶 15+ 新聞專屬參數</td></tr>
 <tr><td class="bold">screen_view</td><td><span class="tag tag-a">App</span> <span class="tag tag-v">WebView</span></td><td data-i="x_ga_e2">所有 App 畫面 + WebView 透過 Bridge 轉發</td></tr>
 <tr><td class="bold">search</td><td><span class="tag tag-w">Web</span> <span class="tag tag-a">App</span></td><td data-i="x_ga_e3">搜尋結果頁：search_term, search_type, result_count</td></tr>
 <tr><td class="bold">click_notification</td><td><span class="tag tag-a" data-i="x_apponly">App 專屬</span></td><td data-i="x_ga_e4">推播點擊進站：push_date, notify_title, notify_type</td></tr>
+<tr><td class="bold">ad_received</td><td><span class="tag tag-w">Web MB</span></td><td data-i="x_ga_e5">蓋板廣告渲染完成（首頁 + 文章頁 popup 版位）</td></tr>
+<tr><td class="bold">ad_clicked</td><td><span class="tag tag-w">Web MB</span></td><td data-i="x_ga_e6">蓋板廣告點擊（首頁 + 文章頁 popup 版位）</td></tr>
 </table>
 <div class="a" style="margin-top:8px;font-size:14px"><strong>📋 </strong><a href="https://docs.google.com/spreadsheets/d/1w0Ll4FTS_qtGwEvBe-qWAuvIfGJOCE4R136BqyCZM50/edit?usp=sharing" target="_blank" style="color:var(--ga2);font-weight:700;text-decoration:underline">GA4 數據追蹤事件埋點表 (Google Sheet)</a><span style="color:var(--text2)" data-i="x_sheetref" data-i="x_sheetref"> — 開發以此表欄位定義為準</span></div>
 
@@ -544,24 +546,24 @@ t1:'M4 Data Tracking Spec',t1sub:'Data Tracking Spec — Web + App',
 t1ar:'Architecture — Timing & Environment',t1ars:'Why is identity the foundation? How do the five tools connect?',
 t1c1:'Identity Core',t1c3:'Analytics',t1c4:'Audience Measurement',t1c5:'Behavior Recording',cuT:'ClickUp Dev Cards',
 t2a:'Architecture — Why ID Comes First',
-t2intro:'<strong>Purpose:</strong> To give all tracking tools a shared identity (mpid), enabling cross-platform user attribution. If the first event fires before mpid is obtained, that data becomes "headless" — unattributable. <strong style="color:var(--id)">That is why ID Sync SDK must finish loading before all tracking tags.</strong>',
-t2seqt:'📐 Web Page Load Sequence',t2s1:'Placed at top of <head>, loads before GTM. Internally loads mParticle + Insider (Insider not active in MVP)',t2s2:'Auto-loaded by ID Sync, no separate import needed',t2s3:'SDK ready → get mpid + read tvbs_uid Cookie → notify all waiting modules',t2s4:'GA4 Config Tag triggers on this event, initializes with both identity values',t2s5a:'mpid + user_id → auto-attached to all subsequent events',t2s5b:'Recommended: native API. GTM option up to RD evaluation.',
-t2part:'⚡ Parallel (no ID wait)',t2pard:'These tools start simultaneously, do NOT wait for mpid',t2cs:'GTM all pages, carries cs_fpid (_ga cookie encrypted)',t2cl:'GTM all pages, fully independent, needs no ID',t2tov:'If SDK not ready in 5 seconds (e.g. blocked by ad-blocker), auto-release. Events sent without ID but site functionality unaffected.',
+t2intro:'<strong>Purpose:</strong> To give all tracking tools a shared identity (mpid), enabling cross-platform user attribution. <strong style="color:var(--id)">ID Sync SDK is placed at top of &lt;head&gt; to start loading as early as possible,</strong> but it loads async with no built-in sync mechanism with GTM — events fire with empty mpid if not ready yet, SDK continues processing in background.',
+t2seqt:'📐 Web Page Load Sequence',t2s1:'Placed at top of <head> to start ASAP (async, non-blocking). Internally loads mParticle + Insider (Insider not active in MVP)',t2s2:'Auto-loaded by ID Sync, no separate import needed',t2s3:'SDK processes mpid in background. onReady is notification only, not a gate. Events fire with empty value if mpid not ready yet.',t2s4:'Frontend pushes mpid_ready first (with getMPID() current value, empty string if not ready), then tvbs_page_view.',t2s5a:'Set User Properties (value if available, SDK backfills later)',t2s5b:'Recommended: native API. GTM option up to RD evaluation.',
+t2part:'⚡ Parallel (no ID wait)',t2pard:'These tools start simultaneously, do NOT wait for mpid',t2cs:'GTM all pages, carries cs_fpid (_ga cookie encrypted)',t2cl:'GTM all pages, fully independent, needs no ID',t2tov:'SDK continuously processes mpid acquisition and updates in background. Frontend needs no wait mechanism — events fire immediately, SDK backfills identity when obtained.',
 t2b:'Architecture — Web / App / WebView',t3intro:'<strong>Data goal:</strong> App users should only send screen_view regardless of native or WebView screens (all non-native pages opened in App, not just articles), without creating extra sessions. <strong>Bridge</strong> lets the Web SDK detect it is inside an App and hand events to the App for unified delivery, maintaining a single session.',
 t3brd:'A Bridge is a communication channel pre-injected into the WebView by App developers. Web frontend detects this channel via JavaScript — if present, it means the code is running inside an App, so it hands event data to the App for unified delivery. <strong>GA4 and mParticle each need their own independent Bridge</strong>, operating independently.',
 t4t:'ID Sync SDK — Site-wide Identity Core',t4why:'<strong>To give all tracking tools a shared identity (mpid),</strong> enabling cross-platform user attribution. ID Sync SDK internally wraps mParticle SDK and Insider SDK (Insider not active in MVP), responsible for initialization and mpid generation.',
-t4d1:'Console: await window.mParticleMpIdReadyPromise → returns mpid string',t4d2:'With ad-blocker: auto-release after 5s, page unaffected',t4d3:'In HTML source, ID Sync loads before GTM.',
-t4rule1:'Place in <head> with priority loading. Ensures mpid is ready before any GTM tracking tags fire.',t4rule2:'No tracking events may be sent before mpid is ready',t4rule3:'After 5s timeout, resolve(undefined). Downstream modules decide whether to send without ID.',
-t4do1:'Place ID Sync script in <head> (before GTM), add Promise bridge code. All tracking logic awaits this Promise before sending.',t4do2:'Provide API Keys and SDK URL. Manage mParticle Data Plan (tvbs_plan_v2).',t4ins:'Insider SDK is built into ID Sync but NOT active this MVP. Will evaluate based on business needs later.',
+t4d1:'ID Sync script tag appears before GTM container in HTML source (ensures early start)',t4d2:'Tracking events fire normally without waiting for mpid — no blocking or delays',t4d3:'In HTML source, ID Sync loads before GTM.',
+t4rule1:'Place in <head> with priority loading. Ensures mpid is ready before any GTM tracking tags fire.',t4rule2:'Frontend needs NO wait/block mechanism. Events fire with empty mpid if not ready yet.',t4rule3:'SDK processes mpid in background continuously. Once obtained, handles identity sync automatically — frontend does not intervene.',
+t4do1:'Place ID Sync script in <head> (before GTM). No Promise or callback wait needed — events fire immediately, SDK handles identity in background.',t4do2:'Provide API Keys and SDK URL. Manage mParticle Data Plan (tvbs_plan_v2).',t4ins:'Insider SDK is built into ID Sync but NOT active this MVP. Will evaluate based on business needs later.',
 t5t:'mParticle (CDP) — Screen View Tracking',t5why:'<strong>To segment users by behavior,</strong> providing the business team with data for precision ad targeting and content recommendations. mParticle records each user\'s browsing journey, serving as the core data source for the CDP (Customer Data Platform).',
 t5d1:'mParticle Live Stream shows Screen View events on each page navigation',t5d2:'In WebView, events not duplicated (Live Stream shows single entry from Native)',t5d3:'All 6 screens have correct field values (per Google Sheet)',
 t5rule1:'Web recommended to use native API (logPageView). Whether to use GTM is up to RD based on Next.js routing evaluation.',t5rule2:'WebView Bridge name must match exactly: tvbsNewsbridge',t5rule3:'MVP: anonymous visitors only (mpid). Login/logout not implemented yet.',
 t5do1:'Call mParticle.logPageView() on each route. Get article/video field values from backend API. Set bridge name in config.',t5do2:'Install mParticle Native SDK (iOS/Android separate). Call logScreen. Bind WebView Bridge (tvbsNewsbridge) during init.',t5do3:'Define event names, attribute fields, and data formats. Manage mParticle Data Plan.',
 t6t:'GA4 — Analytics',t6why:'<strong>To accurately measure site-wide traffic,</strong> ensuring Web and App data is correctly attributed in the same GA4 report. Cross-device attribution via User Properties (mpid + user_id).',
-t6d1:'GA4 DebugView shows page_view events with mpid and user_id in User Properties',t6d2:'WebView events appear as screen_view (display_mode = app_webview) in Firebase',t6d3:'Search page triggers search event with search_term and result_count',
-t6rule1:'mpid_ready MUST be pushed BEFORE tvbs_page_view (wrong order = first event lacks identity)',t6rule2:'Web display_mode is always "web"; WebView MUST overwrite to "app_webview"',t6rule3:'When no data, send empty string "". Do NOT omit the key.',
-t6upweb:'GTM Config Tag User Properties map to DataLayer variables. Frontend pushes mpid + user_id when sending mpid_ready.',t6upapp:'After Firebase SDK init, call setUserProperty("mpid", value) and setUserProperty("user_id", value).',
-t6wvd:'Firebase SDK sends screen_view directly, display_mode = app_native',t6wvw:'Web frontend detects Bridge → renames page_view to screen_view → overwrites display_mode to app_webview → calls Native Bridge for Firebase delivery',t6wvb:'Android: check window.AnalyticsWebInterface · iOS: check window.webkit.messageHandlers.firebase',
+t6d1:'GA4 DebugView shows page_view events with User Properties (mpid may be empty initially, subsequent events should include it)',t6d2:'WebView events appear as screen_view (display_mode = app_webview) in Firebase',t6d3:'Search page triggers search event with search_term and result_count',
+t6rule1:'mpid_ready must still be pushed BEFORE tvbs_page_view. mpid = getMPID() current value, empty string if not ready. No waiting needed.',t6rule2:'display_mode parameter NOT sent in MVP (WebView scope unclear, POSTPONED)',t6rule3:'When no data, send empty string "". Do NOT omit the key.',
+t6upweb:'GTM Config Tag User Properties map to DataLayer variables. mpid included if ready, empty if not — SDK backfills after obtaining.',t6upapp:'After Firebase SDK init, call setUserProperty("mpid", value) and setUserProperty("user_id", value).',
+t6wvd:'Firebase SDK sends screen_view directly',t6wvw:'Web frontend detects Bridge → renames page_view to screen_view → calls Native Bridge for Firebase delivery (MVP: article page only)',t6wvb:'Android: check window.AnalyticsWebInterface · iOS: check window.webkit.messageHandlers.firebase',
 t6k3:'video_start/progress/complete, share, scroll — deferred to Phase 2',
 t7t:'Comscore — Audience Measurement',t7why:'<strong>To meet industry audience measurement standards,</strong> providing credible traffic proof to third parties. Comscore data is the basis for business proposals to clients.',
 t7d1:'Comscore Tag Validator shows correct c2 and beacon request',t7d2:'Network Tab shows scorecardresearch.com beacon with cs_fpid parameter',t7d3:'Test environment sends zero Comscore requests',
@@ -577,7 +579,7 @@ x_split:'Split',
 x_tool:'Tool',x_browser:'Browser',x_native:'Native',x_webview:'Web inside App',
 x_e1w:'In <head>, loads before GTM',x_e1a:'Not used (App uses mParticle Native SDK)',x_e1v:'Same as Web, events routed to App via Bridge',
 x_e2w:'Built into ID Sync; native API for events',x_e2a:'Native SDK installed directly; logScreen API',x_e2v:'Web SDK detects Bridge → relay mode, App sends events',
-x_e3w:'GTM: wait mpid_ready → init → send events',x_e3a:'Firebase SDK: wait mpid → set User Properties → logEvent',x_e3v:'Frontend detects Bridge → page_view renamed screen_view → App Firebase sends',
+x_e3w:'GTM: wait mpid_ready → init → send events',x_e3a:'Firebase SDK: wait mpid → set User Properties → logEvent',x_e3v:'Frontend detects Bridge → page_view renamed screen_view → App Firebase (MVP: article page only)',
 x_e4w:'GTM all pages',x_e4a:'Comscore Native SDK (standalone)',x_e4v:'Uses Web GTM (same as Web)',
 x_e5w:'GTM all pages',x_e5a:'N/A (App native not instrumented)',x_e5v:'Uses Web GTM (same as Web)',
 x_brt:'What is a Bridge? Why do both GA4 and mParticle need one?',
@@ -595,14 +597,16 @@ x_home:'/ Home',x_static:'Frontend static',x_article:'/{cat}/{id} Article',x_api
 x_video:'/video/{id} Video',x_category:'/category/{slug} Category',x_package:'/topic/{slug} Topic',
 x_search:'/search?q={kw} Search',x_frontapi:'Frontend + API',
 x_gtmseq:'⚙ GTM Dual Tag Sequence',x_upprop:'👤 User Properties (Must Implement)',
-x_appvswebview:'🔀 App Native vs WebView Routing (Must Implement)',x_mvpevents:'📊 MVP Events (4 total)',
+x_appvswebview:'🔀 App Native vs WebView Routing (MVP: Article Page Only)',x_mvpevents:'📊 MVP Events (6 total)',
 x_source:'Value Source',x_desc:'Description',x_anon:'Anonymous',x_member:'With Member',
 x_mpidesc:'mParticle identity ID',x_hasval:'Has value',x_uidesc:'TVBS member ID',x_empty:'Empty string ""',x_filluid:'Fill tvbs_uid value',
 x_evname:'Event Name',x_evplat:'Platform',x_evdesc:'Description',
 x_ga_e1:'All Web pages, 15+ news-specific params',x_ga_e2:'All App screens + WebView via Bridge',
 x_ga_e3:'Search results: search_term, search_type, result_count',x_ga_e4:'Push notification click: push_date, notify_title, notify_type',
+x_ga_e5:'Interstitial ad rendered (Home + Article popup slots, Web MB only)',
+x_ga_e6:'Interstitial ad clicked (Home + Article popup slots, Web MB only)',
 x_apponly:'App Only',
-x_configtag:'① GA4 Config Tag',x_configsub:'Trigger: mpid_ready · Set User Properties',
+x_configtag:'① GA4 Config Tag',x_configsub:'Set User Properties (mpid + user_id)',
 x_eventtag:'② GA4 Event Tag',x_eventsub:'Trigger: tvbs_page_view / search · Send actual events',
 x_phase2:'Phase 2 (Not in this release)',
 x_csfpid:'🔐 cs_fpid 4 Params (UDM 2.0 — Web Required)',
@@ -619,9 +623,9 @@ x_svoverview:'📊 Screen View Events (MVP: 6 screens)',
 x_fedev:'🖥 Frontend RD',x_datateam:'📊 Data Team',x_webfe:'🖥 Web Frontend',
 x_appdev:'📱 App Dev',x_websetup:'🖥 Web Setup',x_appsetup:'📱 App Setup',
 x_sheetref:' — Use this sheet as the definitive field reference',
-x_bridge_discuss:'💬 Bridge implementation scope and covered pages are pending RD research and discussion',
-x_ga4_bridge_discuss:'💬 WebView scope: all non-native pages opened in App (not just articles). Exact scope pending RD confirmation',
-x_mp_bridge_discuss:'💬 Goal: all non-native pages in App use Bridge (not just articles), keeping session unbroken. Exact scope pending RD confirmation',
+x_bridge_discuss:'📌 MVP: GA4 JS Bridge article page only, others Phase 2. mParticle Bridge scope TBD.',
+x_ga4_bridge_discuss:'📌 MVP scope: JS Bridge only implemented for article page. Other pages deferred to Phase 2.',
+x_mp_bridge_discuss:'📌 MVP scope: Bridge page coverage TBD. GA4 Bridge only covers article page in this phase.',
 x_qabtn:'❓ Q&A',
 qa1t:'Q&A — mParticle WebView Bridge Implementation',
 qa1back:'← Back to mParticle',
@@ -701,42 +705,39 @@ document.addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key==='ArrowD
 <div class="qa-item" onclick="this.classList.toggle('open')">
 <div class="qa-q"><span class="qa-icon">▶</span><span class="qa-tag" style="background:#FFEBEE;color:#C62828">ID Sync</span><span class="qa-label">mpid 沒拿到（5 秒逾時）怎麼辦？各工具會怎樣？</span></div>
 <div class="qa-ans">
-<p><strong>結論：</strong>mpid 沒拿到 = 該筆事件失去「跨工具歸戶」能力，但每個工具各自的基礎量測和網站功能完全不受影響。</p>
+<p><strong>SDK 實際行為（根據 SDK 開發窗口 Feedback）：</strong></p>
+<p>SDK 持續在背景處理 mpid 的取得與更新。前端<strong>不需要建立任何等待機制</strong>（沒有 Promise、沒有 setTimeout、沒有 5 秒逾時——這些在 SDK 原始碼中都不存在）。</p>
+<p><strong>mpid 未就緒時各工具的行為：</strong></p>
 <table class="qa-table">
-<tr><th>工具</th><th>mpid 未取得時的行為</th><th>影響程度</th></tr>
-<tr><td><strong>GA4</strong></td><td>照送事件。mpid User Property 帶空字串 ""。事件進報表，流量數字不少。</td><td>該筆無法跨工具歸戶</td></tr>
-<tr><td><strong>mParticle</strong></td><td>照送事件。SDK 用內部匿名 ID 追蹤。</td><td>該筆無法跟 GA4 對照</td></tr>
-<tr><td><strong>Comscore</strong></td><td>完全不受影響。不依賴 mpid。</td><td>無</td></tr>
-<tr><td><strong>Clarity</strong></td><td>完全不受影響。不依賴 mpid。</td><td>無</td></tr>
+<tr><th>工具</th><th>mpid 未取得時的行為</th><th>後續處理</th></tr>
+<tr><td><strong>GA4</strong></td><td>照送事件，mpid User Property 帶空值</td><td>SDK 背景取得 mpid 後，後續事件自動帶入</td></tr>
+<tr><td><strong>mParticle</strong></td><td>照送事件，SDK 用內部匿名 ID</td><td>SDK 取得 mpid 後自行處理身分同步</td></tr>
+<tr><td><strong>Comscore</strong></td><td>完全不受影響，不依賴 mpid</td><td>—</td></tr>
+<tr><td><strong>Clarity</strong></td><td>完全不受影響，不依賴 mpid</td><td>—</td></tr>
 </table>
-<p><strong>關於 5 秒等待時間：</strong></p>
-<p>• 5 秒是業界常見的平衡點，不是官方硬性規定<br>
-• 等待的是 Promise（非同步），不會阻塞頁面渲染，使用者感受零影響<br>
-• 正常網路環境下 SDK 約 1-2 秒就緒，99% 不會真的等到 5 秒<br>
-• 太短（1-2 秒）→ 慢速網路下太多 undefined；太長（10+ 秒）→ 使用者可能已換頁<br>
-• 不影響 Core Web Vitals（非同步 Promise 不構成 Long Task）</p>
+<p><strong>關鍵認知修正：</strong></p>
+<p>• onReady callback 只是「通知」，不是「閘門」——SDK 不會阻止其他程式碼執行<br>
+• 前端程式碼中不應存在針對 mpid 就緒的 Promise、setTimeout 或 Callback 等待邏輯<br>
+• SDK 會持續在背景嘗試取得 mpid，取得後自行補齊，前端不需介入</p>
 </div>
 </div>
 
 <div class="qa-item" onclick="this.classList.toggle('open')">
 <div class="qa-q"><span class="qa-icon">▶</span><span class="qa-tag" style="background:#FFF3E0;color:#E65100">GA4</span><span class="qa-label">ID Sync 為什麼不能直接把 mpid 送給 GA4？為什麼中間還需要前端處理？</span></div>
 <div class="qa-ans">
-<p style="background:#FFF3E0;padding:10px 14px;border-radius:6px;font-size:13px;color:#E65100;font-weight:600;margin-bottom:12px">⚠ 以下為 Claude 的分析建議，實際架構請由 Ted 和 Ethan 討論決定</p>
-<p><strong>背景：</strong>GA4 是 Google 的產品，它透過 GTM DataLayer 或 Firebase SDK 接收資料。ID Sync SDK 是 mParticle 體系，兩者之間需要一個橋接步驟。</p>
-<p><strong>比喻：</strong>ID Sync 像是「發卡機」發出悠遊卡（mpid），但要搭高鐵（GA4）還是得到高鐵的閘門（GTM）刷一次。</p>
-<p><strong>目前設計的流程：</strong></p>
+<p style="background:#FFF3E0;padding:10px 14px;border-radius:6px;font-size:13px;color:#E65100;font-weight:600;margin-bottom:12px">⚠ 以下為 Claude 的分析，實際架構請由 Ted 和 Ethan 討論決定</p>
+<p><strong>背景更新：</strong>根據 SDK 開發窗口的 Feedback，SDK 與 GTM 之間無內建同步機制。SDK 以 async 載入，onReady 只是通知不是閘門，前端不需要建立等待機制。</p>
+<p><strong>新的理解：</strong></p>
 <table class="qa-table">
 <tr><th>步驟</th><th>負責方</th><th>做什麼</th></tr>
-<tr><td><strong>① 產出 mpid</strong></td><td>ID Sync SDK（Ted 團隊維護）</td><td>初始化 mParticle → 取得 mpid → 存在 Promise 裡</td></tr>
-<tr><td><strong>② 橋接推送</strong></td><td>前端 RD</td><td>await Promise 拿到 mpid + 讀取 tvbs_uid → dataLayer.push 推給 GTM</td></tr>
-<tr><td><strong>③ 設定歸戶</strong></td><td>GTM / GA4（Ted 團隊設定）</td><td>收到 mpid_ready → Config Tag 啟動 → 把 mpid + user_id 寫入 User Properties</td></tr>
+<tr><td><strong>① SDK 背景處理</strong></td><td>ID Sync SDK（Ted 團隊維護）</td><td>async 載入 → 背景持續取得 mpid → 取得後自行處理身分同步</td></tr>
+<tr><td><strong>② 前端直接發送</strong></td><td>前端 RD</td><td>不等 mpid。事件觸發時有值帶入、沒值帶空值，正常推送 DataLayer</td></tr>
+<tr><td><strong>③ GTM 正常觸發</strong></td><td>GTM / GA4（Ted 團隊設定）</td><td>Config Tag 設定 User Properties → 有 mpid 帶入，沒有帶空值</td></tr>
 </table>
-<p><strong>追問：dataLayer 是全域的，為什麼 SDK 不直接推？</strong></p>
-<p>技術上可行——dataLayer 就是一個全域 JavaScript 陣列，任何程式碼都能往裡面塞。Claude 認為分開處理可能有以下好處，但最終由 Ted 和 Ethan 判斷：</p>
-<p>① <strong>耦合考量：</strong>如果 SDK 內部直接推 dataLayer，SDK 就必須知道 GTM 的事件名稱和變數格式。兩邊改動時可能互相影響。</p>
-<p>② <strong>控制權考量：</strong>前端除了推 mpid，還要同時推 user_id（tvbs_uid Cookie）。Cookie 的讀取邏輯是否應該放在 SDK 內，需要討論。</p>
-<p>③ <strong>可測試性考量：</strong>前端 await Promise 再推 dataLayer，這個流程可以在前端斷點除錯。</p>
-<p style="background:var(--card2);padding:10px 14px;border-radius:6px;font-size:13px;color:var(--text);margin-top:10px"><strong>💬 待討論：</strong>第 ② 步由前端橋接是否為最佳做法，或是否有更好的整合方式，請 Ted 和 Ethan 在 Refinement 中確認。</p>
+<p><strong>與舊邏輯的差異：</strong></p>
+<p>• 舊：前端必須 await Promise → mpid 就緒後才推事件給 GTM<br>
+• 新：前端直接推事件，mpid 有就帶、沒有就空值，SDK 背景補齊</p>
+<p style="background:var(--card2);padding:10px 14px;border-radius:6px;font-size:13px;color:var(--text);margin-top:10px"><strong>💬 待討論：</strong>在新邏輯下，mpid 空值的比例是否會影響跨工具歸戶的數據品質，請 Ted 和 Ethan 評估。</p>
 </div>
 </div>
 
